@@ -1,0 +1,70 @@
+## LaTeX — arquivos gerados / temporários
+
+## Core auxiliares
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+## Compilação intermediária
+*.dvi
+*.xdv
+*-converted-to.*
+
+## PDF gerado (descomente se NÃO quiser versionar o PDF final)
+# *.pdf
+
+## Bibliografia
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+*.brf
+
+## Índices e glossários
+*.idx
+*.ind
+*.ilg
+*.glo
+*.gls
+*.glg
+*.acn
+*.acr
+*.alg
+*.ist
+
+## latexmk
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+
+## Beamer / nav
+*.nav
+*.snm
+*.vrb
+
+## Outros pacotes comuns
+*.lol
+*.figlist
+*.makefile
+*.figlist
+*.dpth
+*.md5
+*.auxlock
+
+## Editores / SO
+*~
+.DS_Store
