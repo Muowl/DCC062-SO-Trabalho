@@ -1,0 +1,292 @@
+%==============================================================================
+% DCC062 - Sistemas Operacionais - Trabalho Teorico (2026.1)
+% Tema 1: Android e Fuchsia
+% Pontos de responsabilidade: 1, 2 e 4
+% Autor: Felipe Lazzarini Cunha
+%==============================================================================
+\documentclass[12pt,a4paper]{article}
+
+%------------------------------------------------------------------ Codificacao
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+
+%------------------------------------------------------------------ Tipografia
+\usepackage{lmodern}
+\usepackage{microtype}            % ajuste fino de espacamento
+\usepackage{setspace}
+\onehalfspacing                   % espacamento 1,5 (padrao academico)
+
+%--------------------------------------------------------------------- Layout
+\usepackage[a4paper,left=3cm,right=2cm,top=3cm,bottom=2cm]{geometry}
+\usepackage{titlesec}
+\usepackage{parskip}              % paragrafos com espaco em vez de recuo
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}             % tabelas profissionais
+\usepackage{array}
+
+%------------------------------------------------------------------ Hyperlinks
+\definecolor{linkazul}{HTML}{1A5276}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkazul,
+    citecolor=linkazul,
+    urlcolor=linkazul,
+    pdftitle={Trabalho Teorico - Android e Fuchsia},
+    pdfauthor={Felipe Lazzarini Cunha}
+}
+\usepackage[capitalise,brazilian]{cleveref}
+
+%--------------------------------------------------------- Estilo dos titulos
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{linkazul}}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+%------------------------------------------------------ Cabecalho / rodape
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\lhead{\small DCC062 --- Sistemas Operacionais}
+\rhead{\small Tema 1: Android e Fuchsia}
+\cfoot{\thepage}
+
+%------------------------------------------------------ Ambiente de "nota"
+% Caixa para anotacoes/lembretes de pesquisa (remover na versao final)
+\usepackage{mdframed}
+\newmdenv[
+  linecolor=linkazul,linewidth=0.6pt,
+  backgroundcolor=linkazul!4,
+  roundcorner=4pt,skipabove=8pt,skipbelow=8pt,
+  innertopmargin=6pt,innerbottommargin=6pt
+]{nota}
+
+\begin{document}
+
+%==============================================================================
+% CAPA
+%==============================================================================
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+{\scshape\large Universidade Federal de Juiz de Fora\par}
+{\scshape Departamento de Ciencia da Computacao\par}
+\vspace{0.4cm}
+{\scshape DCC062 --- Sistemas Operacionais --- 2026.1\par}
+
+\vfill
+
+{\color{linkazul}\rule{\linewidth}{0.6pt}}
+\vspace{0.6cm}
+
+{\Huge\bfseries Android e Fuchsia\par}
+\vspace{0.5cm}
+{\Large Trabalho Teorico --- Tema 1\par}
+\vspace{0.3cm}
+{\large Pontos 1, 2 e 4\par}
+
+\vspace{0.4cm}
+{\color{linkazul}\rule{\linewidth}{0.6pt}}
+
+\vfill
+
+\begin{flushright}
+{\large\bfseries Autor\par}
+{\large Felipe Lazzarini Cunha\par}
+\vspace{0.6cm}
+{\large\bfseries Grupo 8\par}
+\end{flushright}
+
+\vfill
+{\large Juiz de Fora\par Julho de 2026\par}
+\end{titlepage}
+
+%==============================================================================
+% SUMARIO
+%==============================================================================
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+%==============================================================================
+% PONTO 1
+%==============================================================================
+\section{Apresentacao sobre o tema}
+\label{sec:apresentacao}
+
+\subsection{Visao geral}
+
+O Tema~1 reune dois sistemas operacionais desenvolvidos pela Google que, embora
+compartilhem a mesma mantenedora, representam abordagens arquiteturais
+profundamente distintas. De um lado, o \textbf{Android} e o sistema operacional
+movel mais difundido do mundo, construido sobre um \emph{kernel} Linux modificado
+e amplamente consolidado no mercado~\cite{aosp,androidsite}. De outro, o
+\textbf{Fuchsia} e um sistema operacional concebido ``do zero'' pela Google,
+estruturado sobre um \emph{microkernel} proprio chamado Zircon e um modelo de
+seguranca baseado em capacidades (\emph{capability-based security}), que rompe
+com a tradicao dos sistemas derivados do Unix~\cite{fuchsiadev,fuchsiawiki}.
+
+Estudar os dois lado a lado e instrutivo justamente pelo contraste: o Android
+ilustra a evolucao pragmatica de um \emph{kernel} monolitico maduro adaptado ao
+contexto movel, enquanto o Fuchsia exemplifica uma tentativa de repensar, a partir
+de premissas modernas de seguranca, modularidade e atualizabilidade, o que deve
+ser um sistema operacional de proposito geral~\cite{fuchsiawiki,zircon}. As secoes
+seguintes detalham cada sistema; aqui interessa situar o leitor quanto a origem,
+ao porte e ao estado atual de ambos.
+
+\subsection{Android}
+
+O Android teve origem na empresa \emph{Android Inc.}, fundada em 2003 e adquirida
+pela Google em 2005. Sua primeira versao comercial chegou ao mercado em 2008, com
+o lancamento do aparelho HTC Dream~\cite{androidwiki}. Tecnicamente, trata-se de
+uma pilha de software cujo nucleo e um \emph{kernel} Linux de suporte de longo
+prazo (LTS) acrescido de modificacoes especificas da Google --- os chamados
+\emph{Android Common Kernels} (ACKs)~\cite{aospkernel}. Grande parte dessa pilha e
+distribuida como software livre por meio do \emph{Android Open Source Project}
+(AOSP)~\cite{aosp}.
+
+Em termos de adocao, o Android e hoje o sistema operacional mais utilizado do
+planeta: dados de meados de 2025 apontam cerca de 72\% do mercado movel global e
+aproximadamente 44,5\% quando consideradas todas as classes de dispositivo~%
+\cite{marketshare}. A versao estavel mais recente no momento desta pesquisa e o
+\textbf{Android~16}, lancado em 10 de junho de 2025 e baseado no \emph{kernel}
+Linux 6.12, com o Android~17 previsto para 2026~\cite{android16}. O alcance do
+sistema vai de \emph{smartphones} e \emph{tablets} a televisores, automoveis e
+dispositivos vestiveis, e tende a se expandir ainda mais para o ambiente de
+\emph{desktop} (ver \cref{sub:porque}).
+
+\subsection{Fuchsia}
+
+O Fuchsia veio a publico de maneira atipica: em agosto de 2016, sem qualquer
+anuncio formal, jornalistas identificaram no GitHub um repositorio de codigo
+mantido pela Google~\cite{fuchsiawiki}. Diferentemente do Android, o Fuchsia nao
+se baseia no \emph{kernel} Linux. Seu nucleo --- inicialmente denominado
+\emph{Magenta} e renomeado para \textbf{Zircon} em setembro de 2017 --- e um
+\emph{microkernel} orientado a objetos com seguranca baseada em capacidades, e o
+sistema e implementado em multiplas linguagens, entre elas Rust, C++, C, Dart, Go
+e Python~\cite{fuchsiawiki,zircon}.
+
+O Fuchsia chegou a produtos de consumo pela primeira vez em maio de 2021, por meio
+de uma atualizacao de software do Google Nest Hub de primeira geracao, que
+substituiu o sistema anterior (Cast OS, baseado em Linux); a implantacao se
+estendeu aos demais aparelhos de primeira geracao ate agosto de 2021 e alcancou o
+Nest Hub de segunda geracao em 2023~\cite{fuchsiawiki}. O projeto, contudo,
+enfrentou reducao de equipe a partir de 2023 e, embora siga recebendo
+manutencao --- com versoes lancadas ate 2026 --- seu papel estrategico tornou-se
+mais discreto do que se especulava em seu inicio~\cite{fuchsiawiki}.
+
+\subsection{Por que comparar Android e Fuchsia}
+\label{sub:porque}
+
+A comparacao entre os dois sistemas e relevante por evidenciar duas filosofias
+opostas de construcao de um sistema operacional. O Android adota um \emph{kernel}
+monolitico (Linux), no qual grande parte dos servicos --- \emph{drivers}, pilha de
+rede, sistemas de arquivos --- executa no espaco de \emph{kernel}; ja o Fuchsia
+adota um \emph{microkernel} (Zircon) que mantem no nucleo apenas o essencial,
+delegando os demais servicos a componentes isolados em espaco de usuario e
+mediados por capacidades~\cite{zircon,fuchsiawiki}. Esse contraste sintetiza um
+debate classico de Sistemas Operacionais entre desempenho e simplicidade do modelo
+monolitico, de um lado, e isolamento, seguranca e atualizabilidade do modelo
+micronucleo, de outro.
+
+Por algum tempo especulou-se que o Fuchsia poderia vir a substituir ou unificar os
+sistemas da Google. O movimento recente da empresa, entretanto, aponta em outra
+direcao: o projeto \textbf{Aluminium OS}, anunciado em 2025 e com lancamento
+previsto para 2026, propoe unificar Android e ChromeOS sobre a fundacao do
+\emph{Android} --- e nao do Fuchsia~\cite{aluminiumos}. Assim, mais do que disputar
+o mesmo nicho, os dois sistemas ilustram caminhos tecnologicos distintos que a
+Google explorou em paralelo, o que torna o tema especialmente rico para um estudo
+de Sistemas Operacionais.
+
+%==============================================================================
+% PONTO 2
+%==============================================================================
+\section{Proposito, evolucao e virtualizacao}
+\label{sec:proposito}
+
+\begin{nota}
+\textbf{Roteiro (Ponto 2):} Proposito do SO em questao; evolucao no tempo;
+mecanismos de virtualizacao presentes.
+\end{nota}
+
+\subsection{Proposito de cada sistema}
+% TODO Android: SO para dispositivos moveis/embarcados com tela sensivel ao toque,
+%       foco em interatividade, eficiencia energetica e ecossistema de aplicativos.
+% TODO Fuchsia: SO de proposito geral, modular e seguro, projetado para escalar
+%       de dispositivos IoT a sistemas maiores; foco em atualizabilidade e isolamento.
+
+\subsection{Evolucao no tempo}
+% TODO Android: linha do tempo das versoes (Cupcake -> versoes recentes),
+%       mudancas de kernel, ART x Dalvik, Project Treble, Mainline/APEX.
+% TODO Fuchsia: de "Magenta" para "Zircon", marcos do projeto, lancamento no
+%       Nest Hub (2021) e atualizacoes subsequentes.
+
+% Sugestao: tabela cronologica comparativa.
+\begin{table}[h]
+\centering
+\caption{Marcos cronologicos (preencher e referenciar as fontes).}
+\label{tab:cronologia}
+\begin{tabular}{>{\bfseries}l l l}
+\toprule
+Ano & Android & Fuchsia \\
+\midrule
+2008 & Android 1.0          & --- \\
+2016 & ---                  & Anuncio do projeto (Magenta/Zircon) \\
+2021 & ---                  & Lancamento no Google Nest Hub \\
+\ldots & \ldots             & \ldots \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mecanismos de virtualizacao}
+% TODO Android: Android Virtualization Framework (AVF), pKVM (protected KVM),
+%       maquinas virtuais para isolamento, alem da "virtualizacao" historica da
+%       maquina ART. Citar tambem o uso de containers/sandbox por aplicativo.
+% TODO Fuchsia: modelo baseado em capacidades, componentes isolados,
+%       e suporte a virtualizacao (Machina) para executar Linux/guests.
+
+%==============================================================================
+% PONTO 4
+%==============================================================================
+\section{Requisitos do tipo de aplicacao atendido}
+\label{sec:requisitos}
+
+\begin{nota}
+\textbf{Roteiro (Ponto 4):} Quais os requisitos do tipo de aplicacao que este
+SO/kernel atende (baixo tempo de resposta? baixo tempo de retorno? outro?).
+\emph{Obs.:} a classificacao do \emph{tipo} de aplicacao (Ponto 3) e o
+\emph{como} esses requisitos sao atendidos (Ponto 5) sao de outros integrantes;
+aqui foque em \textbf{quais} sao os requisitos.
+\end{nota}
+
+\subsection{Requisitos do Android}
+% TODO: Baixo tempo de resposta (interatividade, UI a 60/120 Hz),
+%       eficiencia energetica (bateria), uso restrito de memoria,
+%       responsividade sob restricao de recursos, seguranca/isolamento por app.
+
+\subsection{Requisitos do Fuchsia}
+% TODO: Atualizabilidade, seguranca por capacidades, modularidade,
+%       escalabilidade entre classes de dispositivo, latencia previsivel.
+
+\subsection{Sintese comparativa dos requisitos}
+% TODO: Tabela contrastando requisitos prioritarios de cada sistema.
+
+%==============================================================================
+% REFERENCIAS
+%==============================================================================
+\newpage
+\bibliographystyle{plain}
+\bibliography{referencias}
+% Enquanto a .bib nao estiver populada, pode-se comentar as duas linhas acima
+% e usar a lista manual abaixo:
+% \begin{thebibliography}{9}
+% \bibitem{android} Android Open Source Project. \url{https://source.android.com/}.
+% \bibitem{fuchsia} Fuchsia. \url{https://fuchsia.dev/}.
+% \end{thebibliography}
+
+\end{document}

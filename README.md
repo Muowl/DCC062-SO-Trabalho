@@ -35,6 +35,10 @@ O roteiro teórico possui **12 pontos**, divididos entre os 4 integrantes (3 pon
 ## Estrutura do repositório
 
 - `docs/` — documentação base disponibilizada pelo professor e demais materiais do trabalho.
+- `teorico/` — trabalho teórico (Tema 1) em LaTeX.
+  - `main.tex` — documento principal (capa, sumário e pontos 1, 2 e 4).
+  - `referencias.bib` — bibliografia.
+  - Compilação: `cd teorico && latexmk -pdf main.tex`.
 
 ## Datas
 
