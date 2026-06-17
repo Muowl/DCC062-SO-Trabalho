@@ -1,26 +1,26 @@
 %==============================================================================
-% DCC062 - Sistemas Operacionais - Trabalho Teorico (2026.1)
+% DCC062 - Sistemas Operacionais - Trabalho Teórico (2026.1)
 % Tema 1: Android e Fuchsia
 % Pontos de responsabilidade: 1, 2 e 4
 % Autor: Felipe Lazzarini Cunha
 %==============================================================================
 \documentclass[12pt,a4paper]{article}
 
-%------------------------------------------------------------------ Codificacao
+%------------------------------------------------------------------ Codificação
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[brazilian]{babel}
 
 %------------------------------------------------------------------ Tipografia
 \usepackage{lmodern}
-\usepackage{microtype}            % ajuste fino de espacamento
+\usepackage{microtype}            % ajuste fino de espaçamento
 \usepackage{setspace}
-\onehalfspacing                   % espacamento 1,5 (padrao academico)
+\onehalfspacing                   % espaçamento 1,5 (padrão acadêmico)
 
 %--------------------------------------------------------------------- Layout
 \usepackage[a4paper,left=3cm,right=2cm,top=3cm,bottom=2cm]{geometry}
 \usepackage{titlesec}
-\usepackage{parskip}              % paragrafos com espaco em vez de recuo
+\usepackage{parskip}              % parágrafos com espaço em vez de recuo
 \usepackage{enumitem}
 \usepackage{graphicx}
 \usepackage{xcolor}
@@ -35,18 +35,18 @@
     linkcolor=linkazul,
     citecolor=linkazul,
     urlcolor=linkazul,
-    pdftitle={Trabalho Teorico - Android e Fuchsia},
+    pdftitle={Trabalho Teórico - Android e Fuchsia},
     pdfauthor={Felipe Lazzarini Cunha}
 }
 \usepackage[capitalise,brazilian]{cleveref}
 
-%--------------------------------------------------------- Estilo dos titulos
+%--------------------------------------------------------- Estilo dos títulos
 \titleformat{\section}
   {\normalfont\Large\bfseries\color{linkazul}}{\thesection}{1em}{}
 \titleformat{\subsection}
   {\normalfont\large\bfseries}{\thesubsection}{1em}{}
 
-%------------------------------------------------------ Cabecalho / rodape
+%------------------------------------------------------ Cabeçalho / rodapé
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
@@ -57,7 +57,7 @@
 \cfoot{\thepage}
 
 %------------------------------------------------------ Ambiente de "nota"
-% Caixa para anotacoes/lembretes de pesquisa (remover na versao final)
+% Caixa para anotações/lembretes de pesquisa (remover na versão final)
 \usepackage{mdframed}
 \newmdenv[
   linecolor=linkazul,linewidth=0.6pt,
@@ -77,7 +77,7 @@
 \vspace*{1cm}
 
 {\scshape\large Universidade Federal de Juiz de Fora\par}
-{\scshape Departamento de Ciencia da Computacao\par}
+{\scshape Departamento de Ciência da Computação\par}
 \vspace{0.4cm}
 {\scshape DCC062 --- Sistemas Operacionais --- 2026.1\par}
 
@@ -88,7 +88,7 @@
 
 {\Huge\bfseries Android e Fuchsia\par}
 \vspace{0.5cm}
-{\Large Trabalho Teorico --- Tema 1\par}
+{\Large Trabalho Teórico --- Tema 1\par}
 \vspace{0.3cm}
 {\large Pontos 1, 2 e 4\par}
 
@@ -109,7 +109,7 @@
 \end{titlepage}
 
 %==============================================================================
-% SUMARIO
+% SUMÁRIO
 %==============================================================================
 \pagenumbering{arabic}
 \tableofcontents
@@ -119,247 +119,353 @@
 %==============================================================================
 % PONTO 1
 %==============================================================================
-\section{Apresentacao sobre o tema}
+\section{Apresentação sobre o tema}
 \label{sec:apresentacao}
 
-\subsection{Visao geral}
+\subsection{Visão geral}
 
-O Tema~1 reune dois sistemas operacionais desenvolvidos pela Google que, embora
+O Tema~1 reúne dois sistemas operacionais desenvolvidos pela Google que, embora
 compartilhem a mesma mantenedora, representam abordagens arquiteturais
-profundamente distintas. De um lado, o \textbf{Android} e o sistema operacional
-movel mais difundido do mundo, construido sobre um \emph{kernel} Linux modificado
+profundamente distintas. De um lado, o \textbf{Android} é o sistema operacional
+móvel mais difundido do mundo, construído sobre um \emph{kernel} Linux modificado
 e amplamente consolidado no mercado~\cite{aosp,androidsite}. De outro, o
-\textbf{Fuchsia} e um sistema operacional concebido ``do zero'' pela Google,
-estruturado sobre um \emph{microkernel} proprio chamado Zircon e um modelo de
-seguranca baseado em capacidades (\emph{capability-based security}), que rompe
-com a tradicao dos sistemas derivados do Unix~\cite{fuchsiadev,zircon,
+\textbf{Fuchsia} é um sistema operacional concebido ``do zero'' pela Google,
+estruturado sobre um \emph{microkernel} próprio chamado Zircon e um modelo de
+segurança baseado em capacidades (\emph{capability-based security}), que rompe
+com a tradição dos sistemas derivados do Unix~\cite{fuchsiadev,zircon,
 fuchsia_secure}.
 
-Estudar os dois lado a lado e instrutivo justamente pelo contraste: o Android
-ilustra a evolucao pragmatica de um \emph{kernel} monolitico maduro adaptado ao
-contexto movel, enquanto o Fuchsia exemplifica uma tentativa de repensar, a partir
-de premissas modernas de seguranca, modularidade e atualizabilidade, o que deve
-ser um sistema operacional de proposito geral~\cite{zircon,fuchsia_components,
-fuchsia_updatable}. As secoes seguintes detalham cada sistema; aqui interessa
-situar o leitor quanto a origem, ao porte e ao estado atual de ambos.
+Estudar os dois lado a lado é instrutivo justamente pelo contraste: o Android
+ilustra a evolução pragmática de um \emph{kernel} monolítico maduro adaptado ao
+contexto móvel, enquanto o Fuchsia exemplifica uma tentativa de repensar, a partir
+de premissas modernas de segurança, modularidade e atualizabilidade, o que deve
+ser um sistema operacional de propósito geral~\cite{zircon,fuchsia_components,
+fuchsia_updatable}. As seções seguintes detalham cada sistema; aqui interessa
+situar o leitor quanto à origem, ao porte e ao estado atual de ambos.
 
 \subsection{Android}
 
 O Android teve origem na empresa \emph{Android Inc.}, fundada em 2003 e adquirida
-pela Google em 2005. Sua primeira versao comercial chegou ao mercado em 2008, com
-o lancamento do aparelho HTC Dream~\cite{androidwiki}. Tecnicamente, trata-se de
-uma pilha de software cujo nucleo e um \emph{kernel} Linux de suporte de longo
-prazo (LTS) acrescido de modificacoes especificas da Google --- os chamados
-\emph{Android Common Kernels} (ACKs)~\cite{aospkernel}. Grande parte dessa pilha e
-distribuida como software livre por meio do \emph{Android Open Source Project}
+pela Google em 2005. Sua primeira versão comercial chegou ao mercado em 2008, com
+o lançamento do aparelho HTC Dream~\cite{androidwiki}. Tecnicamente, trata-se de
+uma pilha de software cujo núcleo é um \emph{kernel} Linux de suporte de longo
+prazo (LTS) acrescido de modificações específicas da Google --- os chamados
+\emph{Android Common Kernels} (ACKs)~\cite{aospkernel}. Grande parte dessa pilha é
+distribuída como software livre por meio do \emph{Android Open Source Project}
 (AOSP)~\cite{aosp}.
 
-Em termos de adocao, o Android segue como o sistema operacional de maior alcance
-global quando se considera tambem o mercado movel: estatisticas de uso na Web
-mantem o Android na lideranca entre sistemas operacionais moveis e tambem no
-agregado de todas as classes de dispositivo~\cite{marketshare}. A versao estavel
-consolidada mais recente no inicio desta pesquisa era o \textbf{Android~16},
-lancado em 10 de junho de 2025; em junho de 2026, a documentacao oficial da
-Google ja apresentava o \textbf{Android~17}, ainda com notas de versao beta no
+Em termos de adoção, o Android segue como o sistema operacional de maior alcance
+global quando se considera também o mercado móvel: estatísticas de uso na Web
+mantêm o Android na liderança entre sistemas operacionais móveis e também no
+agregado de todas as classes de dispositivo~\cite{marketshare}. A versão estável
+consolidada mais recente no início desta pesquisa era o \textbf{Android~16},
+lançado em 10 de junho de 2025; em junho de 2026, a documentação oficial da
+Google já apresentava o \textbf{Android~17}, ainda com notas de versão beta no
 ciclo consultado~\cite{android16,android17}. O alcance do sistema vai de
-\emph{smartphones} e \emph{tablets} a televisores, automoveis, dispositivos
-vestiveis e experiencias de tela grande baseadas na pilha Android, como o
+\emph{smartphones} e \emph{tablets} a televisores, automóveis, dispositivos
+vestíveis e experiências de tela grande baseadas na pilha Android, como o
 Googlebook~\cite{googlebook}.
 
 \subsection{Fuchsia}
 
-O Fuchsia veio a publico de maneira atipica: em agosto de 2016, sem qualquer
-anuncio formal, jornalistas identificaram no GitHub um repositorio de codigo
-mantido pela Google~\cite{fuchsiawiki}. Diferentemente do Android, o Fuchsia nao
-se baseia no \emph{kernel} Linux. Seu nucleo --- inicialmente denominado
-\emph{Magenta} e renomeado para \textbf{Zircon} em setembro de 2017 --- e um
-\emph{microkernel} orientado a objetos com seguranca baseada em capacidades, e o
-sistema e implementado em multiplas linguagens, entre elas Rust, C++, C, Dart, Go
+O Fuchsia veio a público de maneira atípica: em agosto de 2016, sem qualquer
+anúncio formal, jornalistas identificaram no GitHub um repositório de código
+mantido pela Google~\cite{fuchsiawiki}. Diferentemente do Android, o Fuchsia não
+se baseia no \emph{kernel} Linux. Seu núcleo --- inicialmente denominado
+\emph{Magenta} e renomeado para \textbf{Zircon} em setembro de 2017 --- é um
+\emph{microkernel} orientado a objetos com segurança baseada em capacidades, e o
+sistema é implementado em múltiplas linguagens, entre elas Rust, C++, C, Dart, Go
 e Python~\cite{fuchsiawiki,zircon}.
 
 O Fuchsia chegou a produtos de consumo pela primeira vez em maio de 2021, por meio
-de uma atualizacao de software do Google Nest Hub de primeira geracao, que
-substituiu o sistema anterior (Cast OS, baseado em Linux); a implantacao se
-estendeu aos demais aparelhos de primeira geracao ate agosto de 2021 e alcancou o
-Nest Hub de segunda geracao em 2023~\cite{fuchsiawiki}. O projeto, contudo,
-enfrentou reducao de equipe a partir de 2023 e, embora siga documentado e
-mantido em fontes oficiais recentes, seu papel estrategico tornou-se mais
-discreto do que se especulava em seu inicio~\cite{fuchsiawiki,fuchsiadev}.
+de uma atualização de software do Google Nest Hub de primeira geração, que
+substituiu o sistema anterior (Cast OS, baseado em Linux); a implantação se
+estendeu aos demais aparelhos de primeira geração até agosto de 2021 e alcançou o
+Nest Hub de segunda geração em 2023~\cite{fuchsiawiki}. O projeto, contudo,
+enfrentou redução de equipe a partir de 2023 e, embora siga documentado e
+mantido em fontes oficiais recentes, seu papel estratégico tornou-se mais
+discreto do que se especulava em seu início~\cite{fuchsiawiki,fuchsiadev}.
 
 \subsection{Por que comparar Android e Fuchsia}
 \label{sub:porque}
 
-A comparacao entre os dois sistemas e relevante por evidenciar duas filosofias
-opostas de construcao de um sistema operacional. O Android adota um \emph{kernel}
-monolitico (Linux), no qual grande parte dos servicos --- \emph{drivers}, pilha de
-rede, sistemas de arquivos --- executa no espaco de \emph{kernel}; ja o Fuchsia
-adota um \emph{microkernel} (Zircon) que mantem no nucleo apenas o essencial,
-delegando os demais servicos a componentes isolados em espaco de usuario e
+A comparação entre os dois sistemas é relevante por evidenciar duas filosofias
+opostas de construção de um sistema operacional. O Android adota um \emph{kernel}
+monolítico (Linux), no qual grande parte dos serviços --- \emph{drivers}, pilha de
+rede, sistemas de arquivos --- executa no espaço de \emph{kernel}; já o Fuchsia
+adota um \emph{microkernel} (Zircon) que mantém no núcleo apenas o essencial,
+delegando os demais serviços a componentes isolados em espaço de usuário e
 mediados por capacidades~\cite{zircon,fuchsiawiki}. Esse contraste sintetiza um
-debate classico de Sistemas Operacionais entre desempenho e simplicidade do modelo
-monolitico, de um lado, e isolamento, seguranca e atualizabilidade do modelo
-micronucleo, de outro.
+debate clássico de Sistemas Operacionais entre desempenho e simplicidade do modelo
+monolítico, de um lado, e isolamento, segurança e atualizabilidade do modelo
+micronúcleo, de outro.
 
 Por algum tempo especulou-se que o Fuchsia poderia vir a substituir ou unificar os
 sistemas da Google. O movimento recente da empresa, entretanto, aponta em outra
-direcao: a documentacao de desenvolvimento para \textbf{Googlebook} apresenta
-experiencias de laptop apoiadas na pilha Android e em tecnicas de aplicacoes
+direção: a documentação de desenvolvimento para \textbf{Googlebook} apresenta
+experiências de laptop apoiadas na pilha Android e em técnicas de aplicações
 adaptativas para telas grandes~\cite{googlebook}. Assim, mais do que disputar o
-mesmo nicho, Android e Fuchsia ilustram caminhos tecnologicos distintos que a
+mesmo nicho, Android e Fuchsia ilustram caminhos tecnológicos distintos que a
 Google explorou em paralelo, o que torna o tema especialmente rico para um estudo
 de Sistemas Operacionais.
 
 %==============================================================================
 % PONTO 2
 %==============================================================================
-\section{Proposito, evolucao e virtualizacao}
+\section{Propósito, evolução e virtualização}
 \label{sec:proposito}
 
-\subsection{Proposito de cada sistema}
+\subsection{Propósito de cada sistema}
 
 O \textbf{Android} foi concebido como uma plataforma completa para dispositivos
-moveis e embarcados, especialmente aparelhos com tela sensivel ao toque,
-conectividade permanente, bateria limitada e forte dependencia de aplicativos de
-terceiros. Seu proposito nao e apenas executar processos sobre um \emph{kernel}
-Linux, mas oferecer uma pilha integrada que inclui \emph{framework} de aplicacao,
-tempo de execucao gerenciado, servicos de midia, seguranca por aplicativo,
-distribuicao de software e compatibilidade com grande diversidade de hardware.
-Por isso, o sistema combina um nucleo Linux adaptado ao ambiente movel com
-mecanismos de isolamento, permissao e atualizacao voltados a um ecossistema amplo
-de fabricantes, operadoras, desenvolvedores e usuarios finais~\cite{aosp,
+móveis e embarcados, especialmente aparelhos com tela sensível ao toque,
+conectividade permanente, bateria limitada e forte dependência de aplicativos de
+terceiros. Seu propósito não é apenas executar processos sobre um \emph{kernel}
+Linux, mas oferecer uma pilha integrada que inclui \emph{framework} de aplicação,
+tempo de execução gerenciado, serviços de mídia, segurança por aplicativo,
+distribuição de software e compatibilidade com grande diversidade de hardware.
+Por isso, o sistema combina um núcleo Linux adaptado ao ambiente móvel com
+mecanismos de isolamento, permissão e atualização voltados a um ecossistema amplo
+de fabricantes, operadoras, desenvolvedores e usuários finais~\cite{aosp,
 aospkernel,androidsite}.
 
-O \textbf{Fuchsia}, por sua vez, tem um proposito mais experimental e arquitetural:
-servir como um sistema operacional de proposito geral, modular, atualizavel e
-orientado a seguranca desde a base. Em vez de herdar a arquitetura Unix/Linux, o
-Fuchsia e construido sobre o Zircon, um nucleo orientado a objetos que expoe
-recursos como capacidades; acima dele, quase todo o software e organizado como
-componentes isolados, com dependencias e permissoes declaradas explicitamente
+O \textbf{Fuchsia}, por sua vez, tem um propósito mais experimental e arquitetural:
+servir como um sistema operacional de propósito geral, modular, atualizável e
+orientado à segurança desde a base. Em vez de herdar a arquitetura Unix/Linux, o
+Fuchsia é construído sobre o Zircon, um núcleo orientado a objetos que expõe
+recursos como capacidades; acima dele, quase todo o software é organizado como
+componentes isolados, com dependências e permissões declaradas explicitamente
 ~\cite{zircon,fuchsia_components,fuchsia_secure}. Essa proposta torna o Fuchsia
 particularmente interessante para dispositivos conectados e produtos nos quais
-isolamento, atualizabilidade e composicao modular sao requisitos centrais, ainda
-que sua presenca comercial seja muito mais restrita que a do Android.
+isolamento, atualizabilidade e composição modular são requisitos centrais, ainda
+que sua presença comercial seja muito mais restrita que a do Android.
 
-\subsection{Evolucao no tempo}
+\subsection{Evolução no tempo}
 
-A evolucao do Android pode ser entendida em tres eixos. O primeiro e a expansao
-de mercado: desde o Android 1.0, lancado comercialmente em 2008 no HTC Dream, o
+A evolução do Android pode ser entendida em três eixos. O primeiro é a expansão
+de mercado: desde o Android 1.0, lançado comercialmente em 2008 no HTC Dream, o
 sistema deixou de ser uma plataforma de \emph{smartphones} para se tornar uma
-familia de variantes usadas tambem em televisores, automoveis, relogios,
-\emph{tablets} e outros equipamentos~\cite{androidwiki,androidsite}. O segundo e
-a maturacao tecnica da pilha: as versoes iniciais usavam a maquina virtual
-Dalvik, enquanto as versoes modernas usam o Android Runtime (ART), que executa o
-formato DEX e introduziu compilacao antecipada, melhorias de coleta de lixo e
-melhor suporte a depuracao~\cite{androidruntime}. O terceiro eixo e a
-modularizacao do proprio sistema. Iniciativas como Treble separaram partes da
-plataforma Android das implementacoes especificas de fornecedores, enquanto o
+família de variantes usadas também em televisores, automóveis, relógios,
+\emph{tablets} e outros equipamentos~\cite{androidwiki,androidsite}. O segundo é
+a maturação técnica da pilha: as versões iniciais usavam a máquina virtual
+Dalvik, enquanto as versões modernas usam o Android Runtime (ART), que executa o
+formato DEX e introduziu compilação antecipada, melhorias de coleta de lixo e
+melhor suporte à depuração~\cite{androidruntime}. O terceiro eixo é a
+modularização do próprio sistema. Iniciativas como Treble separaram partes da
+plataforma Android das implementações específicas de fornecedores, enquanto o
 Mainline, introduzido no Android 10, passou a transformar componentes do sistema
-em modulos atualizaveis fora do ciclo tradicional de versoes completas
+em módulos atualizáveis fora do ciclo tradicional de versões completas
 ~\cite{treble,androidmainline}.
 
-No Fuchsia, a evolucao foi menos orientada por versoes publicas de produto e mais
+No Fuchsia, a evolução foi menos orientada por versões públicas de produto e mais
 por marcos arquiteturais. O projeto apareceu publicamente em 2016, inicialmente
-associado ao nome Magenta; em 2017, o nucleo passou a ser conhecido como Zircon
-~\cite{fuchsiawiki,zircon}. A primeira implantacao em produto de consumo ocorreu
-em 2021, quando o sistema chegou ao Google Nest Hub de primeira geracao, marcando
-a transicao do projeto de uma base experimental para uso real em dispositivos
-Google~\cite{fuchsiawiki}. Desde entao, o desenvolvimento documentado enfatiza
-componentes, pacotes hermeticos, interfaces FIDL, atualizacoes independentes e
+associado ao nome Magenta; em 2017, o núcleo passou a ser conhecido como Zircon
+~\cite{fuchsiawiki,zircon}. A primeira implantação em produto de consumo ocorreu
+em 2021, quando o sistema chegou ao Google Nest Hub de primeira geração, marcando
+a transição do projeto de uma base experimental para uso real em dispositivos
+Google~\cite{fuchsiawiki}. Desde então, o desenvolvimento documentado enfatiza
+componentes, pacotes herméticos, interfaces FIDL, atualizações independentes e
 compatibilidade com software Linux por meio do Starnix~\cite{fuchsia_components,
 fuchsia_updatable,starnix}.
 
 \begin{table}[htbp]
 \centering
-\caption{Marcos cronologicos de Android e Fuchsia.}
+\caption{Marcos cronológicos de Android e Fuchsia.}
 \label{tab:cronologia}
 \begin{tabular}{>{\bfseries}l p{5.5cm} p{5.5cm}}
 \toprule
 Ano & Android & Fuchsia \\
 \midrule
-2008 & Primeira versao comercial, associada ao HTC Dream. & --- \\
-2014--2015 & ART aparece como alternativa ao Dalvik e passa a substitui-lo nas versoes modernas. & --- \\
-2016 & --- & Codigo do projeto aparece publicamente, ainda ligado ao nome Magenta. \\
-2017 & Treble reorganiza a relacao entre plataforma Android e codigo de fornecedores. & O nucleo passa a ser conhecido como Zircon. \\
-2019--2020 & Android 10 introduz Mainline e modulos atualizaveis via APK/APEX. & Consolidacao do modelo de componentes e capacidades. \\
-2021 & Android 12 amplia recursos de privacidade e isolamento no sistema. & Primeira implantacao em produto de consumo, no Google Nest Hub. \\
-2022--2026 & AVF/pKVM se consolida como mecanismo moderno de virtualizacao protegida em dispositivos ARM64. & Starnix amadurece como camada de compatibilidade para executar programas Linux sem usar o kernel Linux. \\
+2008 & Primeira versão comercial, associada ao HTC Dream. & --- \\
+2014--2015 & ART aparece como alternativa ao Dalvik e passa a substituí-lo nas versões modernas. & --- \\
+2016 & --- & Código do projeto aparece publicamente, ainda ligado ao nome Magenta. \\
+2017 & Treble reorganiza a relação entre plataforma Android e código de fornecedores. & O núcleo passa a ser conhecido como Zircon. \\
+2019--2020 & Android 10 introduz Mainline e módulos atualizáveis via APK/APEX. & Consolidação do modelo de componentes e capacidades. \\
+2021 & Android 12 amplia recursos de privacidade e isolamento no sistema. & Primeira implantação em produto de consumo, no Google Nest Hub. \\
+2022--2026 & AVF/pKVM se consolida como mecanismo moderno de virtualização protegida em dispositivos ARM64. & Starnix amadurece como camada de compatibilidade para executar programas Linux sem usar o kernel Linux. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Mecanismos de virtualizacao}
+\subsection{Mecanismos de virtualização}
 
-No Android, e importante separar tres ideias que as vezes aparecem misturadas sob
-o termo ``virtualizacao''. A primeira e o \textbf{tempo de execucao gerenciado}:
-Dalvik e ART nao virtualizam hardware, mas fornecem uma maquina de execucao para
+No Android, é importante separar três ideias que às vezes aparecem misturadas sob
+o termo ``virtualização''. A primeira é o \textbf{tempo de execução gerenciado}:
+Dalvik e ART não virtualizam hardware, mas fornecem uma máquina de execução para
 \emph{bytecode} DEX, permitindo que aplicativos escritos em Java ou Kotlin sejam
-executados de forma portavel sobre diferentes arquiteturas de CPU
-~\cite{androidruntime}. A segunda e o \textbf{isolamento por aplicativo}: cada app
-executa em um contexto separado, com identificador, permissoes e politicas de
-seguranca proprias; isso e uma forma de compartimentalizacao do sistema, embora
-nao seja uma maquina virtual completa.
+executados de forma portável sobre diferentes arquiteturas de CPU
+~\cite{androidruntime}. A segunda é o \textbf{isolamento por aplicativo}: cada app
+executa em um contexto separado, com identificador, permissões e políticas de
+segurança próprias; isso é uma forma de compartimentalização do sistema, embora
+não seja uma máquina virtual completa.
 
-A virtualizacao de hardware propriamente dita aparece no Android moderno por meio
-do \textbf{Android Virtualization Framework} (AVF). Segundo a documentacao do
-AOSP, o AVF fornece ambientes de execucao seguros e privados para codigo que
+A virtualização de hardware propriamente dita aparece no Android moderno por meio
+do \textbf{Android Virtualization Framework} (AVF). Segundo a documentação do
+AOSP, o AVF fornece ambientes de execução seguros e privados para código que
 exige isolamento mais forte que o \emph{sandbox} tradicional de aplicativos. Em
-dispositivos ARM64 compativeis, o AVF usa o pKVM (\emph{protected kernel-based
+dispositivos ARM64 compatíveis, o AVF usa o pKVM (\emph{protected kernel-based
 virtual machine}) como hipervisor e executa \emph{protected virtual machines}
-(pVMs), que podem hospedar, por exemplo, o Microdroid, uma distribuicao Android
-minima voltada a execucao isolada~\cite{androidavf}. O ponto central desse modelo
-e proteger a memoria e os segredos da maquina virtual mesmo diante de comprometimento
+(pVMs), que podem hospedar, por exemplo, o Microdroid, uma distribuição Android
+mínima voltada à execução isolada~\cite{androidavf}. O ponto central desse modelo
+é proteger a memória e os segredos da máquina virtual mesmo diante de comprometimento
 do Android hospedeiro.
 
-No Fuchsia, a arquitetura basica favorece isolamento por desenho, e nao por uma
-camada de virtualizacao semelhante ao AVF. O Zircon fornece primitivas de
-processos, \emph{threads}, memoria virtual e IPC; acima dele, o \emph{Component
+No Fuchsia, a arquitetura básica favorece isolamento por desenho, e não por uma
+camada de virtualização semelhante ao AVF. O Zircon fornece primitivas de
+processos, \emph{threads}, memória virtual e IPC; acima dele, o \emph{Component
 Framework} executa componentes em \emph{sandboxes} com capacidades declaradas
 explicitamente~\cite{zircon,fuchsia_components,fuchsia_secure}. Assim, a unidade
-normal de isolamento do sistema e o componente com capacidades, nao uma VM.
+normal de isolamento do sistema é o componente com capacidades, não uma VM.
 
-Para compatibilidade com software Linux, a documentacao atual do Fuchsia destaca
-o \textbf{Starnix}. Ele permite executar programas Linux nao modificados em um
+Para compatibilidade com software Linux, a documentação atual do Fuchsia destaca
+o \textbf{Starnix}. Ele permite executar programas Linux não modificados em um
 sistema Fuchsia, implementando a interface de chamadas de sistema Linux em um
-programa de espaco de usuario do Fuchsia, em vez de inicializar um kernel Linux
+programa de espaço de usuário do Fuchsia, em vez de inicializar um kernel Linux
 convidado~\cite{starnix,starnixkernel}. Portanto, para o escopo deste trabalho, a
-comparacao mais precisa e: o Android possui virtualizacao protegida de hardware
+comparação mais precisa é: o Android possui virtualização protegida de hardware
 com AVF/pKVM, enquanto o Fuchsia aposta principalmente em isolamento por
 capacidades e componentes, usando Starnix como camada de compatibilidade Linux, e
-nao como hipervisor equivalente.
+não como hipervisor equivalente.
 
 %==============================================================================
 % PONTO 4
 %==============================================================================
-\section{Requisitos do tipo de aplicacao atendido}
+\setcounter{section}{3}
+\section{Requisitos do tipo de aplicação atendido}
 \label{sec:requisitos}
 
-\begin{nota}
-\textbf{Roteiro (Ponto 4):} Quais os requisitos do tipo de aplicacao que este
-SO/kernel atende (baixo tempo de resposta? baixo tempo de retorno? outro?).
-\emph{Obs.:} a classificacao do \emph{tipo} de aplicacao (Ponto 3) e o
-\emph{como} esses requisitos sao atendidos (Ponto 5) sao de outros integrantes;
-aqui foque em \textbf{quais} sao os requisitos.
-\end{nota}
+Este ponto identifica \emph{quais} requisitos as aplicações atendidas por cada
+sistema impõem ao SO/kernel. Na terminologia clássica de Sistemas Operacionais,
+um baixo \emph{tempo de resposta} é próprio de cargas interativas, ao passo que um
+baixo \emph{tempo de retorno} (\emph{turnaround}) e a alta vazão caracterizam
+cargas em lote, e a \emph{previsibilidade} temporal distingue cargas de tempo
+real~\cite{tanenbaum}. A classificação do tipo de aplicação (Ponto~3) e a forma
+como esses requisitos são efetivamente atendidos (Ponto~5) cabem a outros
+integrantes; aqui o foco recai sobre \emph{quais} requisitos cada sistema precisa
+satisfazer.
 
 \subsection{Requisitos do Android}
-% TODO: Baixo tempo de resposta (interatividade, UI a 60/120 Hz),
-%       eficiencia energetica (bateria), uso restrito de memoria,
-%       responsividade sob restricao de recursos, seguranca/isolamento por app.
+
+As aplicações atendidas pelo Android são majoritariamente \textbf{interativas} e
+executam em dispositivos móveis alimentados por bateria, com recursos de hardware
+limitados e forte presença de software de terceiros. Esse perfil impõe ao sistema
+um conjunto bem definido de requisitos:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Baixo tempo de resposta (responsividade).} A interface deve reagir à
+  entrada do usuário quase instantaneamente e manter as animações fluidas. Na
+  prática, cada quadro precisa ser produzido dentro do orçamento de tempo do ciclo
+  de atualização da tela --- cerca de 16,7~ms a 60~Hz e aproximadamente 8,3~ms a
+  120~Hz ---, sob pena de \emph{jank} (perda de quadros) perceptível. O sistema
+  trata a responsividade como requisito explícito, com sincronização de quadros
+  (VSync, \emph{frame pacing}) e o monitoramento de \emph{Application Not
+  Responding} (ANR), que sinaliza falha quando um aplicativo deixa de responder a
+  um evento de entrada por alguns segundos~\cite{androidperf,androidruntime}.
+
+\item \textbf{Eficiência energética.} Como a autonomia de bateria é finita,
+  minimizar o consumo de energia é um requisito de primeira ordem: o sistema
+  precisa conter o gasto de processos em segundo plano e respeitar limites
+  térmicos, apoiando-se em mecanismos como Doze, hibernação de aplicativos e
+  mitigação térmica~\cite{androidperf}.
+
+\item \textbf{Operação sob restrição de memória e recursos.} Dispositivos móveis
+  dispõem de pouca memória e de pouca ou nenhuma área de troca convencional; o
+  sistema deve permanecer estável sob pressão de memória, o que exige uso
+  parcimonioso de RAM pelos aplicativos e uma política ativa de recuperação de
+  memória, exercida em espaço de usuário pelo \emph{low memory killer daemon}
+  (lmkd)~\cite{androidperf}.
+
+\item \textbf{Segurança e isolamento por aplicativo.} Por reunir aplicativos de
+  muitas origens, o Android precisa isolar cada aplicativo dos demais e do
+  sistema, protegendo os dados do usuário. Esse requisito aparece tanto no
+  \emph{sandbox} padrão de cada aplicativo quanto na oferta de ambientes de
+  execução reforçados para cargas mais sensíveis, providos pelo
+  AVF~\cite{aosp,androidavf}.
+
+\item \textbf{Portabilidade e compatibilidade de hardware.} Por fim, atender um
+  ecossistema com enorme diversidade de aparelhos torna a portabilidade e a
+  compatibilidade requisitos estruturais, refletidos na separação entre a
+  plataforma e o código dos fornecedores~\cite{aospkernel,treble}.
+\end{itemize}
 
 \subsection{Requisitos do Fuchsia}
-% TODO: Atualizabilidade, seguranca por capacidades, modularidade,
-%       escalabilidade entre classes de dispositivo, latencia previsivel.
 
-\subsection{Sintese comparativa dos requisitos}
-% TODO: Tabela contrastando requisitos prioritarios de cada sistema.
+O Fuchsia também visa dispositivos conectados e produtos de propósito geral, mas
+hierarquiza os requisitos de modo distinto: em vez de otimizar primeiro a
+experiência interativa imediata, eleva à condição de requisito atributos
+estruturais do sistema. A própria documentação organiza o projeto em torno de
+princípios de design, dos quais se destacam, para este ponto, a segurança e a
+atualizabilidade~\cite{fuchsia_secure,fuchsia_updatable}.
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Segurança por capacidades.} O sistema parte do princípio de menor
+  privilégio e da ausência de autoridade ambiente: um componente só interage com
+  os objetos cujas capacidades lhe foram concedidas explicitamente, e tudo executa
+  em \emph{sandbox}, com namespace próprio em vez de um sistema de arquivos
+  global~\cite{fuchsia_secure,zircon}.
+
+\item \textbf{Atualizabilidade.} O software é entregue em pacotes atualizáveis de
+  forma independente e sob demanda, à semelhança da Web, de modo que uma correção
+  de vulnerabilidade possa alcançar todos os produtos sem coordenação individual
+  por dispositivo~\cite{fuchsia_updatable}.
+
+\item \textbf{Modularidade e composição.} O sistema é montado a partir de
+  componentes isolados, com dependências e capacidades declaradas explicitamente;
+  a composição modular é, assim, um requisito de projeto, e não um mero detalhe de
+  implementação~\cite{fuchsia_components}.
+
+\item \textbf{Escalabilidade entre classes de dispositivo.} O Zircon e a pilha de
+  componentes foram concebidos para abranger desde dispositivos pequenos até
+  equipamentos mais capazes, o que faz da escalabilidade um requisito presente
+  desde a base~\cite{fuchsiadev,zircon}.
+
+\item \textbf{Compatibilidade com o ecossistema Linux.} Para ser viável na
+  prática, o sistema precisa executar software já existente; esse requisito de
+  compatibilidade é atendido pelo Starnix, que implementa a interface de chamadas
+  de sistema do Linux sobre o próprio Fuchsia~\cite{starnix}.
+\end{itemize}
+
+\subsection{Síntese comparativa dos requisitos}
+
+Embora ambos atendam, em última instância, aplicações interativas e conectadas,
+Android e Fuchsia hierarquizam seus requisitos de maneiras diferentes. O Android
+prioriza requisitos percebidos diretamente pelo usuário final --- responsividade e
+autonomia de bateria ---, enquanto o Fuchsia coloca em primeiro plano requisitos
+estruturais do sistema --- segurança por capacidades e atualizabilidade. A
+\Cref{tab:requisitos} resume esse contraste.
+
+\begin{table}[htbp]
+\centering
+\caption{Requisitos prioritários de Android e Fuchsia.}
+\label{tab:requisitos}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{3.4cm} p{4.6cm} p{4.6cm}}
+\toprule
+Requisito & Android & Fuchsia \\
+\midrule
+Tempo de resposta & Crítico: interface interativa dentro do orçamento de quadro (60--120~Hz). & Relevante, mas não é o eixo prioritário do projeto. \\
+Eficiência energética & Crítica: autonomia de bateria no dispositivo móvel. & Importante conforme a classe de dispositivo. \\
+Memória e recursos & Operação sob forte restrição, com recuperação ativa (lmkd). & Custo de isolamento previsto no modelo de componentes. \\
+Segurança e isolamento & Por aplicativo (sandbox e UID; AVF para cargas sensíveis). & Por capacidades, no núcleo do projeto (menor privilégio). \\
+Atualizabilidade & Modular e incremental (Treble, Mainline). & Princípio central: pacotes atualizáveis sob demanda. \\
+Escalabilidade de hardware & Ampla, consolidada pela adaptação do ecossistema. & Prevista por desenho desde o Zircon. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Em síntese, os requisitos do Android giram em torno de \emph{tempo de resposta
+curto e previsível, economia de energia e operação sob recursos limitados},
+somados ao isolamento por aplicativo; os do Fuchsia giram em torno de
+\emph{segurança por capacidades, atualizabilidade e modularidade}, tendo a
+escalabilidade e a compatibilidade como requisitos de viabilidade. O modo como
+cada sistema satisfaz esses requisitos é tratado no Ponto~5.
 
 %==============================================================================
-% REFERENCIAS
+% REFERÊNCIAS
 %==============================================================================
 \newpage
 \bibliographystyle{plain}
 \bibliography{referencias}
-% Enquanto a .bib nao estiver populada, pode-se comentar as duas linhas acima
+% Enquanto a .bib não estiver populada, pode-se comentar as duas linhas acima
 % e usar a lista manual abaixo:
 % \begin{thebibliography}{9}
 % \bibitem{android} Android Open Source Project. \url{https://source.android.com/}.
