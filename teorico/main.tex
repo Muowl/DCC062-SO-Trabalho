@@ -9,7 +9,7 @@
 %------------------------------------------------------------------ Codificacao
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[brazil]{babel}
+\usepackage[brazilian]{babel}
 
 %------------------------------------------------------------------ Tipografia
 \usepackage{lmodern}
@@ -50,6 +50,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
+\setlength{\headheight}{13.6pt}
 \renewcommand{\headrulewidth}{0.4pt}
 \lhead{\small DCC062 --- Sistemas Operacionais}
 \rhead{\small Tema 1: Android e Fuchsia}
@@ -66,6 +67,7 @@
 ]{nota}
 
 \begin{document}
+\pagenumbering{gobble}
 
 %==============================================================================
 % CAPA
@@ -109,6 +111,7 @@
 %==============================================================================
 % SUMARIO
 %==============================================================================
+\pagenumbering{arabic}
 \tableofcontents
 \thispagestyle{fancy}
 \newpage
@@ -129,15 +132,16 @@ e amplamente consolidado no mercado~\cite{aosp,androidsite}. De outro, o
 \textbf{Fuchsia} e um sistema operacional concebido ``do zero'' pela Google,
 estruturado sobre um \emph{microkernel} proprio chamado Zircon e um modelo de
 seguranca baseado em capacidades (\emph{capability-based security}), que rompe
-com a tradicao dos sistemas derivados do Unix~\cite{fuchsiadev,fuchsiawiki}.
+com a tradicao dos sistemas derivados do Unix~\cite{fuchsiadev,zircon,
+fuchsia_secure}.
 
 Estudar os dois lado a lado e instrutivo justamente pelo contraste: o Android
 ilustra a evolucao pragmatica de um \emph{kernel} monolitico maduro adaptado ao
 contexto movel, enquanto o Fuchsia exemplifica uma tentativa de repensar, a partir
 de premissas modernas de seguranca, modularidade e atualizabilidade, o que deve
-ser um sistema operacional de proposito geral~\cite{fuchsiawiki,zircon}. As secoes
-seguintes detalham cada sistema; aqui interessa situar o leitor quanto a origem,
-ao porte e ao estado atual de ambos.
+ser um sistema operacional de proposito geral~\cite{zircon,fuchsia_components,
+fuchsia_updatable}. As secoes seguintes detalham cada sistema; aqui interessa
+situar o leitor quanto a origem, ao porte e ao estado atual de ambos.
 
 \subsection{Android}
 
@@ -150,15 +154,17 @@ prazo (LTS) acrescido de modificacoes especificas da Google --- os chamados
 distribuida como software livre por meio do \emph{Android Open Source Project}
 (AOSP)~\cite{aosp}.
 
-Em termos de adocao, o Android e hoje o sistema operacional mais utilizado do
-planeta: dados de meados de 2025 apontam cerca de 72\% do mercado movel global e
-aproximadamente 44,5\% quando consideradas todas as classes de dispositivo~%
-\cite{marketshare}. A versao estavel mais recente no momento desta pesquisa e o
-\textbf{Android~16}, lancado em 10 de junho de 2025 e baseado no \emph{kernel}
-Linux 6.12, com o Android~17 previsto para 2026~\cite{android16}. O alcance do
-sistema vai de \emph{smartphones} e \emph{tablets} a televisores, automoveis e
-dispositivos vestiveis, e tende a se expandir ainda mais para o ambiente de
-\emph{desktop} (ver \cref{sub:porque}).
+Em termos de adocao, o Android segue como o sistema operacional de maior alcance
+global quando se considera tambem o mercado movel: estatisticas de uso na Web
+mantem o Android na lideranca entre sistemas operacionais moveis e tambem no
+agregado de todas as classes de dispositivo~\cite{marketshare}. A versao estavel
+consolidada mais recente no inicio desta pesquisa era o \textbf{Android~16},
+lancado em 10 de junho de 2025; em junho de 2026, a documentacao oficial da
+Google ja apresentava o \textbf{Android~17}, ainda com notas de versao beta no
+ciclo consultado~\cite{android16,android17}. O alcance do sistema vai de
+\emph{smartphones} e \emph{tablets} a televisores, automoveis, dispositivos
+vestiveis e experiencias de tela grande baseadas na pilha Android, como o
+Googlebook~\cite{googlebook}.
 
 \subsection{Fuchsia}
 
@@ -176,9 +182,9 @@ de uma atualizacao de software do Google Nest Hub de primeira geracao, que
 substituiu o sistema anterior (Cast OS, baseado em Linux); a implantacao se
 estendeu aos demais aparelhos de primeira geracao ate agosto de 2021 e alcancou o
 Nest Hub de segunda geracao em 2023~\cite{fuchsiawiki}. O projeto, contudo,
-enfrentou reducao de equipe a partir de 2023 e, embora siga recebendo
-manutencao --- com versoes lancadas ate 2026 --- seu papel estrategico tornou-se
-mais discreto do que se especulava em seu inicio~\cite{fuchsiawiki}.
+enfrentou reducao de equipe a partir de 2023 e, embora siga documentado e
+mantido em fontes oficiais recentes, seu papel estrategico tornou-se mais
+discreto do que se especulava em seu inicio~\cite{fuchsiawiki,fuchsiadev}.
 
 \subsection{Por que comparar Android e Fuchsia}
 \label{sub:porque}
@@ -196,10 +202,10 @@ micronucleo, de outro.
 
 Por algum tempo especulou-se que o Fuchsia poderia vir a substituir ou unificar os
 sistemas da Google. O movimento recente da empresa, entretanto, aponta em outra
-direcao: o projeto \textbf{Aluminium OS}, anunciado em 2025 e com lancamento
-previsto para 2026, propoe unificar Android e ChromeOS sobre a fundacao do
-\emph{Android} --- e nao do Fuchsia~\cite{aluminiumos}. Assim, mais do que disputar
-o mesmo nicho, os dois sistemas ilustram caminhos tecnologicos distintos que a
+direcao: a documentacao de desenvolvimento para \textbf{Googlebook} apresenta
+experiencias de laptop apoiadas na pilha Android e em tecnicas de aplicacoes
+adaptativas para telas grandes~\cite{googlebook}. Assim, mais do que disputar o
+mesmo nicho, Android e Fuchsia ilustram caminhos tecnologicos distintos que a
 Google explorou em paralelo, o que torna o tema especialmente rico para um estudo
 de Sistemas Operacionais.
 
@@ -209,46 +215,117 @@ de Sistemas Operacionais.
 \section{Proposito, evolucao e virtualizacao}
 \label{sec:proposito}
 
-\begin{nota}
-\textbf{Roteiro (Ponto 2):} Proposito do SO em questao; evolucao no tempo;
-mecanismos de virtualizacao presentes.
-\end{nota}
-
 \subsection{Proposito de cada sistema}
-% TODO Android: SO para dispositivos moveis/embarcados com tela sensivel ao toque,
-%       foco em interatividade, eficiencia energetica e ecossistema de aplicativos.
-% TODO Fuchsia: SO de proposito geral, modular e seguro, projetado para escalar
-%       de dispositivos IoT a sistemas maiores; foco em atualizabilidade e isolamento.
+
+O \textbf{Android} foi concebido como uma plataforma completa para dispositivos
+moveis e embarcados, especialmente aparelhos com tela sensivel ao toque,
+conectividade permanente, bateria limitada e forte dependencia de aplicativos de
+terceiros. Seu proposito nao e apenas executar processos sobre um \emph{kernel}
+Linux, mas oferecer uma pilha integrada que inclui \emph{framework} de aplicacao,
+tempo de execucao gerenciado, servicos de midia, seguranca por aplicativo,
+distribuicao de software e compatibilidade com grande diversidade de hardware.
+Por isso, o sistema combina um nucleo Linux adaptado ao ambiente movel com
+mecanismos de isolamento, permissao e atualizacao voltados a um ecossistema amplo
+de fabricantes, operadoras, desenvolvedores e usuarios finais~\cite{aosp,
+aospkernel,androidsite}.
+
+O \textbf{Fuchsia}, por sua vez, tem um proposito mais experimental e arquitetural:
+servir como um sistema operacional de proposito geral, modular, atualizavel e
+orientado a seguranca desde a base. Em vez de herdar a arquitetura Unix/Linux, o
+Fuchsia e construido sobre o Zircon, um nucleo orientado a objetos que expoe
+recursos como capacidades; acima dele, quase todo o software e organizado como
+componentes isolados, com dependencias e permissoes declaradas explicitamente
+~\cite{zircon,fuchsia_components,fuchsia_secure}. Essa proposta torna o Fuchsia
+particularmente interessante para dispositivos conectados e produtos nos quais
+isolamento, atualizabilidade e composicao modular sao requisitos centrais, ainda
+que sua presenca comercial seja muito mais restrita que a do Android.
 
 \subsection{Evolucao no tempo}
-% TODO Android: linha do tempo das versoes (Cupcake -> versoes recentes),
-%       mudancas de kernel, ART x Dalvik, Project Treble, Mainline/APEX.
-% TODO Fuchsia: de "Magenta" para "Zircon", marcos do projeto, lancamento no
-%       Nest Hub (2021) e atualizacoes subsequentes.
 
-% Sugestao: tabela cronologica comparativa.
-\begin{table}[h]
+A evolucao do Android pode ser entendida em tres eixos. O primeiro e a expansao
+de mercado: desde o Android 1.0, lancado comercialmente em 2008 no HTC Dream, o
+sistema deixou de ser uma plataforma de \emph{smartphones} para se tornar uma
+familia de variantes usadas tambem em televisores, automoveis, relogios,
+\emph{tablets} e outros equipamentos~\cite{androidwiki,androidsite}. O segundo e
+a maturacao tecnica da pilha: as versoes iniciais usavam a maquina virtual
+Dalvik, enquanto as versoes modernas usam o Android Runtime (ART), que executa o
+formato DEX e introduziu compilacao antecipada, melhorias de coleta de lixo e
+melhor suporte a depuracao~\cite{androidruntime}. O terceiro eixo e a
+modularizacao do proprio sistema. Iniciativas como Treble separaram partes da
+plataforma Android das implementacoes especificas de fornecedores, enquanto o
+Mainline, introduzido no Android 10, passou a transformar componentes do sistema
+em modulos atualizaveis fora do ciclo tradicional de versoes completas
+~\cite{treble,androidmainline}.
+
+No Fuchsia, a evolucao foi menos orientada por versoes publicas de produto e mais
+por marcos arquiteturais. O projeto apareceu publicamente em 2016, inicialmente
+associado ao nome Magenta; em 2017, o nucleo passou a ser conhecido como Zircon
+~\cite{fuchsiawiki,zircon}. A primeira implantacao em produto de consumo ocorreu
+em 2021, quando o sistema chegou ao Google Nest Hub de primeira geracao, marcando
+a transicao do projeto de uma base experimental para uso real em dispositivos
+Google~\cite{fuchsiawiki}. Desde entao, o desenvolvimento documentado enfatiza
+componentes, pacotes hermeticos, interfaces FIDL, atualizacoes independentes e
+compatibilidade com software Linux por meio do Starnix~\cite{fuchsia_components,
+fuchsia_updatable,starnix}.
+
+\begin{table}[htbp]
 \centering
-\caption{Marcos cronologicos (preencher e referenciar as fontes).}
+\caption{Marcos cronologicos de Android e Fuchsia.}
 \label{tab:cronologia}
-\begin{tabular}{>{\bfseries}l l l}
+\begin{tabular}{>{\bfseries}l p{5.5cm} p{5.5cm}}
 \toprule
 Ano & Android & Fuchsia \\
 \midrule
-2008 & Android 1.0          & --- \\
-2016 & ---                  & Anuncio do projeto (Magenta/Zircon) \\
-2021 & ---                  & Lancamento no Google Nest Hub \\
-\ldots & \ldots             & \ldots \\
+2008 & Primeira versao comercial, associada ao HTC Dream. & --- \\
+2014--2015 & ART aparece como alternativa ao Dalvik e passa a substitui-lo nas versoes modernas. & --- \\
+2016 & --- & Codigo do projeto aparece publicamente, ainda ligado ao nome Magenta. \\
+2017 & Treble reorganiza a relacao entre plataforma Android e codigo de fornecedores. & O nucleo passa a ser conhecido como Zircon. \\
+2019--2020 & Android 10 introduz Mainline e modulos atualizaveis via APK/APEX. & Consolidacao do modelo de componentes e capacidades. \\
+2021 & Android 12 amplia recursos de privacidade e isolamento no sistema. & Primeira implantacao em produto de consumo, no Google Nest Hub. \\
+2022--2026 & AVF/pKVM se consolida como mecanismo moderno de virtualizacao protegida em dispositivos ARM64. & Starnix amadurece como camada de compatibilidade para executar programas Linux sem usar o kernel Linux. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Mecanismos de virtualizacao}
-% TODO Android: Android Virtualization Framework (AVF), pKVM (protected KVM),
-%       maquinas virtuais para isolamento, alem da "virtualizacao" historica da
-%       maquina ART. Citar tambem o uso de containers/sandbox por aplicativo.
-% TODO Fuchsia: modelo baseado em capacidades, componentes isolados,
-%       e suporte a virtualizacao (Machina) para executar Linux/guests.
+
+No Android, e importante separar tres ideias que as vezes aparecem misturadas sob
+o termo ``virtualizacao''. A primeira e o \textbf{tempo de execucao gerenciado}:
+Dalvik e ART nao virtualizam hardware, mas fornecem uma maquina de execucao para
+\emph{bytecode} DEX, permitindo que aplicativos escritos em Java ou Kotlin sejam
+executados de forma portavel sobre diferentes arquiteturas de CPU
+~\cite{androidruntime}. A segunda e o \textbf{isolamento por aplicativo}: cada app
+executa em um contexto separado, com identificador, permissoes e politicas de
+seguranca proprias; isso e uma forma de compartimentalizacao do sistema, embora
+nao seja uma maquina virtual completa.
+
+A virtualizacao de hardware propriamente dita aparece no Android moderno por meio
+do \textbf{Android Virtualization Framework} (AVF). Segundo a documentacao do
+AOSP, o AVF fornece ambientes de execucao seguros e privados para codigo que
+exige isolamento mais forte que o \emph{sandbox} tradicional de aplicativos. Em
+dispositivos ARM64 compativeis, o AVF usa o pKVM (\emph{protected kernel-based
+virtual machine}) como hipervisor e executa \emph{protected virtual machines}
+(pVMs), que podem hospedar, por exemplo, o Microdroid, uma distribuicao Android
+minima voltada a execucao isolada~\cite{androidavf}. O ponto central desse modelo
+e proteger a memoria e os segredos da maquina virtual mesmo diante de comprometimento
+do Android hospedeiro.
+
+No Fuchsia, a arquitetura basica favorece isolamento por desenho, e nao por uma
+camada de virtualizacao semelhante ao AVF. O Zircon fornece primitivas de
+processos, \emph{threads}, memoria virtual e IPC; acima dele, o \emph{Component
+Framework} executa componentes em \emph{sandboxes} com capacidades declaradas
+explicitamente~\cite{zircon,fuchsia_components,fuchsia_secure}. Assim, a unidade
+normal de isolamento do sistema e o componente com capacidades, nao uma VM.
+
+Para compatibilidade com software Linux, a documentacao atual do Fuchsia destaca
+o \textbf{Starnix}. Ele permite executar programas Linux nao modificados em um
+sistema Fuchsia, implementando a interface de chamadas de sistema Linux em um
+programa de espaco de usuario do Fuchsia, em vez de inicializar um kernel Linux
+convidado~\cite{starnix,starnixkernel}. Portanto, para o escopo deste trabalho, a
+comparacao mais precisa e: o Android possui virtualizacao protegida de hardware
+com AVF/pKVM, enquanto o Fuchsia aposta principalmente em isolamento por
+capacidades e componentes, usando Starnix como camada de compatibilidade Linux, e
+nao como hipervisor equivalente.
 
 %==============================================================================
 % PONTO 4
