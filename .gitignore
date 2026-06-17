@@ -20,7 +20,7 @@
 *-converted-to.*
 
 ## PDF gerado (descomente se NÃO quiser versionar o PDF final)
-# *.pdf
+*.pdf
 
 ## Bibliografia
 *.bbl
