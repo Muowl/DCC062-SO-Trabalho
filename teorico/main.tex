@@ -537,6 +537,39 @@ No momento em que o hardware gera a IRQ, o Zircon intercepta o sinal, efetua o m
 
 O benefício central dessa engenharia reside no isolamento de falhas do sistema operacional. No modelo monolítico do Android, uma falha de ponteiro ou uma violação de acesso cometida por um \emph{driver} durante o processamento no \emph{Bottom Half} resulta inevitavelmente em um pânico de núcleo (\emph{Kernel Panic}), o que compromete a integridade de todo o sistema e força a reinicialização do dispositivo. No Fuchsia, caso ocorra uma falha análoga durante o ciclo de processamento da interrupção, o impacto restringe-se exclusivamente ao componente isolado do \emph{driver} em espaço de usuário. O núcleo Zircon permanece preservado e operacional, permitindo que o gerenciador de componentes do Fuchsia reinicie o \emph{driver} afetado de forma transparente e em poucos milissegundos.
 
+%==============================================================================
+
+% PONTO 10
+
+%==============================================================================
+\section{Gerenciamento de Memória e Memória Virtual}
+\label{sec:memoria}
+
+\subsection{Gerenciamento de memória e paginação no Android}
+
+O gerenciamento de memória no Android baseia-se diretamente no subsistema de gerenciamento de memória do \emph{kernel} Linux, extensamente adaptado para lidar com as severas restrições de hardware, ciclos de bateria e ausência de armazenamento secundário persistente convencional em dispositivos móveis. O sistema utiliza uma arquitetura de memória virtual puramente baseada em paginação sob demanda, mapeando o espaço de endereçamento lógico dos processos para as páginas físicas da memória RAM por meio da Unidade de Gerenciamento de Memória (MMU). No Android, cada aplicativo executa dentro de seu próprio espaço de endereçamento virtual isolado de 64 bits (em plataformas ARM64 modernas), mitigando interferências mútuas e implementando técnicas avançadas de segurança, como a Randomização do Layout do Espaço de Endereçamento (ASLR). 
+
+Para otimizar o uso da RAM física e estender a vida útil do armazenamento Flash (eMMC ou UFS), o Android abdica do uso de partições de \emph{swap} tradicionais em disco, as quais gerariam desgaste prematuro do hardware por ciclos excessivos de escrita. Em contrapartida, o sistema adota amplamente o mecanismo ZRAM, que consiste em um bloco de memória comprimido alocado na própria RAM dinâmica. Quando o subsistema de paginação do \emph{kernel} identifica páginas de memória subutilizadas ou pertencentes a processos em segundo plano, essas páginas são compactadas e movidas para a ZRAM de forma síncrona, sendo descompactadas imediatamente quando referenciadas pelo processador, expandindo artificialmente a capacidade utilizável do sistema.
+
+\subsection{Mecanismos de controle e otimização de RAM no Android}
+
+Devido à natureza altamente interativa dos dispositivos móveis, o Android avalia o consumo real de memória por meio de uma métrica estrita denominada \emph{Proportional Set Size} (PSS). O cálculo do PSS mensura a quantidade de memória RAM física associada a um processo, dividindo proporcionalmente o peso de páginas de bibliotecas e recursos compartilhados entre todos os processos ativos que os utilizam, o que provê uma visão fidedigna do custo real de cada aplicação para o sistema operacional.
+
+Quando os limiares de memória livre atingem níveis críticos que ameaçam a estabilidade da interface gráfica ou das tarefas prioritárias, o Android aciona o \emph{Low Memory Killer Daemon} (\texttt{lmkd}) operando no espaço de usuário. O \texttt{lmkd} monitora continuamente as flutuações de RAM e, amparado por pontuações dinâmicas de ajuste de falta de memória (\emph{OOM Adjustment scores}), encerra seletivamente os processos menos prioritários. Esse encerramento segue uma hierarquia rígida, liquidando primeiro os aplicativos obsoletos em segundo plano e preservando de forma persistente o processo em foco na tela (\emph{foreground app}), os serviços do sistema e o \emph{framework} gráfico, assegurando baixa latência de transição e alta responsividade visual.
+
+\subsection{Abstração de memória no Fuchsia: VMOs e VMARs}
+
+No Fuchsia o paradigma de gerenciamento de memória virtual afasta-se por completo dos conceitos clássicos de alocação herdados da tradição Unix/Linux, adotando uma arquitetura puramente orientada a objetos e livre do acoplamento tradicional. O Zircon descentraliza o controle da memória virtual estruturando-o em torno de duas abstrações conceituais fundamentais e complementares: os Objetos de Memória Virtual (VMOs --- \emph{Virtual Memory Objects}) e as Regiões de Endereçamento de Memória Virtual (VMARs --- \emph{Virtual Memory Address Regions}).
+
+Um VMO representa um contêiner lógico de dados puros que encapsula um conjunto de páginas físicas alocadas ou mapeadas sob demanda. Ele funciona como a representação primordial de memória utilizável no sistema, permitindo operações de leitura, escrita e clonagem via primitivas de comunicação orientadas a objetos. Por outro lado, uma VMAR abstrai o layout e a geometria do próprio espaço de endereçamento virtual atribuído a um processo. As VMARs organizam-se na forma de uma árvore hierárquica, onde a raiz define todo o espaço virtual disponível para o processo e os nós filhos especificam subdivisões protegidas com permissões de execução, leitura e escrita estipuladas rigorosamente em tempo de projeto.
+
+\subsection{Segurança por capacidades e isolamento de memória no Zircon}
+
+O mapeamento efetivo e o acesso à memória física no Fuchsia estão rigidamente atrelados ao modelo de segurança baseado em capacidades do micronúcleo. Um processo é incapaz de acessar um VMO diretamente; ele deve possuir um \emph{Handle} válido --- uma credencial restrita e intransferível emitida pelo \emph{kernel} --- que contenha as permissões adequadas para mapear o referido VMO dentro de uma sub-região de sua árvore VMAR correspondente. Esta operação traduz o endereço lógico em tabelas de páginas gerenciadas pelo Zircon, consolidando o controle de acesso direto por hardware.
+
+Visto que os \emph{drivers} de dispositivos no Fuchsia operam inteiramente fora do núcleo, no espaço de usuário, cada subsistema de hardware é alocado em um processo isolado dotado de sua própria árvore hierárquica de VMARs. Diferente do Android, onde uma corrupção de memória ou falha de ponteiro em um \emph{driver} no espaço de \emph{kernel} invalida toda a memória global do sistema, a arquitetura do Fuchsia restringe os impactos a um contexto estritamente local. Caso um componente de hardware sofra um vazamento de memória ou tente acessar um endereço virtual inválido, a violação é contida pela VMAR do processo do \emph{driver}, permitindo que o \emph{kernel} elimine o componente instável e recupere as páginas físicas dos VMOs associados sem afetar a execução dos demais serviços ou do núcleo do sistema.
+
+
 
 
 %==============================================================================
