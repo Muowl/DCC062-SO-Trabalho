@@ -4,7 +4,7 @@
 
 ### Responsividade
 
-A responsividade do Android depende de um caminho bem definido entre o input do hardware, a thread principal da aplicação e o display. Ao iniciar um app, o Andriod cria um processo com uma thread principal, com os componentes-padrão do app rodando nessa mesma thread. Essa thread é responsável pelos eventos da interface gráfica, de forma que seu bloqueio impacta a responsividade. O loop da thread é implementada com Looper (loop infinito), MessageQueue (fila de tarefas) e Handler (interface para comunicação entre input do usuário e a thread).[[1](https://developer.android.com/guide/components/processes-and-threads)]
+A responsividade do Android depende de um caminho bem definido entre o input do hardware, a thread principal da aplicação e o display. Ao iniciar um app, o Andriod cria um processo com uma thread principal, com os componentes-padrão do app rodando nessa mesma thread. Essa thread é responsável pelos eventos da interface gráfica, de forma que seu bloqueio impacta a responsividade. O loop da thread é implementada com Looper (loop infinito da aplicação), MessageQueue (fila de tarefas) e Handler (interface para comunicação entre input do usuário e a thread).[[1](https://developer.android.com/guide/components/processes-and-threads)]
 
 O input é normalizado antes de chegar ao app, com os drivers do disositivo traduzindo sinais de touchscreens, teclados, botões e dispositivos de entrada e saída em eventos do Linux. Posteriormente, esses eventos são traduzidos em eventos do Android pelo InputReader e então encaminhados para a janela apropriada pelo InputDispatcher. [[3](https://source.android.com/docs/core/interaction/input)]
 
@@ -27,6 +27,18 @@ Há ainda recursos como o App Standby Buckets que classifica as aplicações por
 ### Operação sob restrição de memória
 
 No que diz respeito ao gerenciamento de memória, o Android age como um sistema operacional padrão, incluindo compressão, priorização de processos e encerramento de processos de menor importância, dependendo para isso do kswapd, o swap daemon do kernel do Linux [[12](https://developer.android.com/topic/performance/memory-management)]. Quando iss é insuficiente, é usado o low-memory killer, que também auxilia no encerramento de processos [[13](https://developer.android.com/topic/performance/memory-management)]. O Android moderno conta ainda com um daemon de enceramento de processos no espaço de usuário, o lmkd [[14](https://source.android.com/docs/core/perf/lmkd)].
+
+### Segurança e isolamento de aplicativos
+
+No quesito segurança, o Android combina o isolamento do kernel, permissões, SELinux, verified boot, app signing e IPC controlado. Cada app possui seu próprio processo no kernel e com seu próprio UID, utilizando os recursos mencionados para isolar apps do sistema e de outros apps. [[15](https://source.android.com/docs/security/app-sandbox), [16](https://source.android.com/docs/security/features/selinux)].
+
+A integridade do sistema é verificada no boot, quando o Android Verified Boot checa o sistema e inclui proteções para que agentes maliciosos não consigam explorar facilmente o dispositivo, mesmo em versões mais atingas. [[17](https://source.android.com/docs/security/features/verifiedboot/avb)]
+
+### Portabilidade e compatibilidade de hardware
+
+A arquitetura do Android separa o sistema operacional de serviços de hardwares específico por meio de HALs -- interfaces padrão implementadas por fabricantes --, o que permite a abstração da integração com drivers em baixo nível. [[18](https://source.android.com/docs/core/architecture)]
+
+A portabilidade do kernel é mantida pelo Generic Kernel Image project, o qual expõe versões estáveis das interfaces para que o kernel e os módulos dos fabricantes possam ser atualizados com maior liberdade e independência. [[19](https://source.android.com/docs/core/architecture/kernel/generic-kernel-image)]
 
 ## Tópico 8: Exclusão mútua, sincronização e IPC
 
