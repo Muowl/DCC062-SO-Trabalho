@@ -467,6 +467,114 @@ cada sistema satisfaz esses requisitos é tratado no Ponto~5.
 \section{Atendimento dos requisitos pelos Sistemas Operacionais}
 \label{sec:atendimento}
 
+\subsection{Android}
+
+No Android, a responsividade depende de um caminho bem definido entre a entrada
+do hardware, a \emph{thread} principal da aplicação e a composição final no
+display. Ao iniciar um aplicativo, o sistema cria um processo Linux com uma
+\emph{thread} principal, na qual executam os componentes padrão da aplicação e o
+tratamento de eventos da interface gráfica. Essa \emph{thread} é organizada em
+torno de um \texttt{Looper}, uma \texttt{MessageQueue} e objetos
+\texttt{Handler}; por isso, operações longas nela bloqueiam diretamente a
+interface e prejudicam o tempo de resposta percebido pelo usuário
+~\cite{android_process_threads}.
+
+A entrada do usuário é normalizada antes de chegar ao aplicativo. Os
+\emph{drivers} traduzem sinais de telas sensíveis ao toque, botões, teclados e
+outros dispositivos em eventos do Linux; em seguida, o \texttt{InputReader}
+interpreta esses eventos no modelo do Android, e o \texttt{InputDispatcher} os
+encaminha à janela apropriada~\cite{android_input}. A sincronização dos quadros
+fica a cargo do \texttt{Choreographer}, que coordena o ritmo de animações,
+entrada e desenho, enquanto a composição final usa VSync, SurfaceFlinger e
+Hardware Composer para reduzir perdas de quadro e manter a fluidez gráfica
+~\cite{android_choreographer,aosp}. Quando esse contrato falha, o sistema detecta
+situações de \emph{Application Not Responding} (ANR), tipicamente associadas a
+um evento de entrada sem resposta por cerca de 5 segundos; serviços em primeiro
+e segundo plano também possuem limites próprios de tempo de resposta
+~\cite{android_anr}.
+
+O requisito de eficiência energética é tratado pelo Android por meio de
+restrições explícitas à execução ociosa e em segundo plano. O sistema suspende o
+dispositivo sempre que possível, limita tarefas de fundo, aplica mitigação
+térmica e usa mecanismos como Doze para adiar trabalho de CPU quando o aparelho
+permanece inativo por tempo prolongado, abrindo janelas periódicas para
+manutenção de atividades pendentes~\cite{android_power_platform,androidperf}. O
+\texttt{SystemSuspend} mantém o controle da suspensão do dispositivo e só permite
+que ela ocorra quando não há \emph{wakelocks} impedindo a entrada em estado de
+baixo consumo~\cite{android_systemsuspend}. Além disso, recursos como App Standby
+Buckets, hibernação de aplicativos e sinais térmicos ajudam a graduar restrições
+conforme o uso recente e o estado físico do aparelho
+~\cite{android_app_standby,android_hibernation,android_thermal}.
+
+Sob pressão de memória, o Android combina mecanismos herdados do Linux com
+políticas próprias voltadas à experiência interativa. O \emph{kernel} usa
+compressão, recuperação de páginas e o \texttt{kswapd}; quando isso não basta, a
+plataforma prioriza processos e encerra os menos importantes para preservar o
+aplicativo em primeiro plano e serviços essenciais~\cite{android_memory_mgmt}.
+Nas versões modernas, essa decisão é coordenada em espaço de usuário pelo
+\texttt{lmkd}, que acompanha a pressão de memória e aciona encerramentos conforme
+a importância do processo para o usuário~\cite{android_lmkd}.
+
+Em segurança, o Android atende aos requisitos de isolamento combinando o
+\emph{sandbox} por aplicativo do Linux, UIDs distintos, permissões, SELinux,
+assinatura de aplicativos, \emph{verified boot} e IPC controlado. Cada aplicativo
+executa em seu próprio processo e com seu próprio UID, o que restringe o acesso a
+dados e recursos de outros aplicativos~\cite{android_app_sandbox,android_selinux}.
+A integridade da base do sistema é reforçada pelo Android Verified Boot, que
+verifica a cadeia de inicialização e dificulta a persistência de alterações não
+autorizadas no software do dispositivo~\cite{android_avb}. Para comunicação entre
+processos, o Android usa o Binder IPC, que abstrai chamadas a serviços remotos e
+serve tanto à comunicação entre aplicativos quanto à comunicação entre
+aplicativos e serviços do sistema~\cite{binder_overview}.
+
+Por fim, a portabilidade é atendida por uma arquitetura que separa a plataforma
+Android dos serviços específicos de hardware. As HALs oferecem interfaces
+padronizadas implementadas pelos fabricantes, reduzindo o acoplamento entre
+\emph{framework}, \emph{drivers} e dispositivos concretos~\cite{android_arch}.
+No nível do \emph{kernel}, o projeto Generic Kernel Image (GKI) estabiliza
+interfaces entre o núcleo comum e módulos de fornecedores, permitindo atualizar
+partes do sistema com maior independência~\cite{android_gki}.
+
+\subsection{Fuchsia}
+
+No Fuchsia, o atendimento dos requisitos parte de uma base arquitetural distinta:
+o Zircon é um núcleo orientado a objetos e baseado em capacidades. Processos são
+isolados por padrão, e recursos do \emph{kernel} são acessados por
+\emph{handles}, isto é, referências locais a objetos com direitos específicos
+associados às operações permitidas~\cite{fuchsia_secure,zircon_intro}. Um novo
+processo começa sem autoridade própria relevante e só recebe recursos que lhe são
+explicitamente passados pelo criador; como canais de IPC também podem transferir
+\emph{handles}, o sistema consegue mover tanto dados quanto capacidades entre
+componentes de forma controlada~\cite{fuchsia_sandboxing,zircon_intro}.
+
+A atualizabilidade é tratada como requisito estrutural. Em vez de organizar todo
+o software como uma aplicação monolítica ou uma imagem rígida de sistema, o
+Fuchsia distribui software em pacotes que podem ser atualizados de forma
+independente e obtidos sob demanda~\cite{fuchsia_packages,fuchsia_updatable}. O
+versionamento da plataforma busca permitir evolução sem quebrar componentes
+antigos: o Component Manager pode impedir a inicialização de componentes cuja
+compatibilidade com o produto não esteja garantida pelas regras documentadas da
+plataforma~\cite{fuchsia_versioning}.
+
+A modularidade decorre do modelo de componentes. As unidades principais de
+software executam em seus próprios ambientes, comunicam-se por capacidades e
+declaram suas necessidades em manifestos. Cada componente é identificado por URL
+e descrito por um manifesto que especifica execução e capacidades
+~\cite{fuchsia_components,fuchsia_components_intro}. A topologia também é
+explícita: componentes pais oferecem capacidades a componentes filhos, o que
+torna a dependência entre partes do sistema visível e controlável
+~\cite{fuchsia_capabilities}.
+
+Para escalar entre classes de dispositivos, o Fuchsia usa configurações de
+\emph{build} orientadas a produto. Essas configurações descrevem arquitetura,
+hardware, \emph{drivers} e outros parâmetros, orientando quais componentes e
+capacidades entram em cada imagem gerada~\cite{fuchsia_build}. Já a
+compatibilidade com o ecossistema Linux é buscada por meio do Starnix, um
+\emph{runner} capaz de criar um ambiente Linux em espaço de usuário. Essa solução
+permite executar algumas aplicações Linux sem modificação, mas não transforma o
+Fuchsia em um sistema totalmente compatível com Linux; a compatibilidade depende
+do comportamento esperado por cada aplicação~\cite{starnix}.
+
 %==============================================================================
 
 % PONTO 6
@@ -517,11 +625,118 @@ O benefício central dessa engenharia reside no isolamento de falhas do sistema 
 \section{Exclusão mútua, sincronização e IPC}
 \label{sec:ipc}
 
+\subsection{Android}
+
+No Android, a exclusão mútua começa no próprio modelo de isolamento: cada
+aplicativo iniciado recebe um processo Linux próprio, com uma \emph{thread}
+principal e a possibilidade de criar \emph{threads} auxiliares. Esse isolamento
+entre processos protege recursos de aplicativos distintos, mas o estado
+compartilhado dentro de um mesmo processo continua exigindo mecanismos
+tradicionais de segurança de \emph{threads}~\cite{android_process_threads}. Na
+camada de aplicação, essas garantias são normalmente implementadas com os
+recursos de sincronização oferecidos por Java e Kotlin; em Java, por exemplo, os
+métodos \texttt{wait()}, \texttt{notify()} e \texttt{notifyAll()} fazem parte do
+modelo de monitores associado a \texttt{Object}~\cite{java_object}.
+
+A sincronização da interface é organizada pela \emph{thread} principal. O
+\texttt{Looper} executa o laço de mensagens da \emph{thread}, a
+\texttt{MessageQueue} mantém as mensagens e tarefas pendentes, e os
+\texttt{Handlers} publicam mensagens ou objetos \texttt{Runnable} nessa fila
+~\cite{android_process_threads}. Esse confinamento é um padrão importante:
+quando o estado da interface é manipulado apenas pela \emph{thread} principal,
+muitos \emph{locks} explícitos deixam de ser necessários. Para operações longas
+ou bloqueantes, o padrão recomendado é deslocar trabalho para \emph{worker
+threads}; em Kotlin, co-rotinas fornecem uma forma usual de expressar trabalho
+assíncrono sem bloquear a interface~\cite{android_coroutines}.
+
+Como processos Android não acessam diretamente a memória uns dos outros, a
+comunicação entre processos usa IPC. O mecanismo central é o Binder, estruturado
+como uma arquitetura cliente-servidor na qual um processo invoca operações
+expostas por outro e recebe respostas mediadas por um \emph{driver} do
+\emph{kernel} Linux~\cite{binder_overview,binder_ipc}. O Service Manager funciona
+como diretório de serviços do sistema, permitindo que clientes localizem objetos
+remotos, enquanto a Android Interface Definition Language (AIDL) oferece uma
+forma de declarar interfaces de alto nível e gerar o código de serialização das
+mensagens~\cite{binder_ipc}.
+
+\subsection{Fuchsia}
+
+No Fuchsia, sincronização e IPC são construídos sobre objetos do Zircon. A
+interação do espaço de usuário com recursos do \emph{kernel} ocorre por meio de
+\emph{handles}, e o \emph{kernel} verifica a validade e os direitos desses
+\emph{handles} em cada operação~\cite{zircon_kernel_concepts}. Para comunicação,
+o sistema oferece canais bidirecionais, que transmitem mensagens e podem
+transferir \emph{handles}, e \emph{sockets}, usados para fluxos de bytes
+~\cite{zircon_channel,zircon_socket}.
+
+O Fuchsia também fornece futexes no Zircon como primitiva de baixo nível para
+construir mecanismos de sincronização de \emph{threads}. Esses futexes diferem do
+modelo Linux porque são locais ao processo: eles servem para sincronizar
+\emph{threads} dentro do mesmo processo, e não para coordenar diretamente
+processos não relacionados~\cite{zircon_futex}. Essa escolha é coerente com o
+modelo geral do Fuchsia, no qual a sincronização interna fica contida no processo
+e a coordenação entre componentes ocorre por canais, capacidades e protocolos
+explícitos.
+
 %==============================================================================
 % PONTO 9
 %==============================================================================
 \section{Gerenciamento de Processos e escalonadores}
 \label{sec:gerenciamento}
+
+\subsection{Android}
+
+No Android, o processo raiz para criação de aplicativos é o Zygote. Durante a
+inicialização, esse processo carrega o Android Runtime e partes centrais do
+\emph{framework}; quando um novo aplicativo precisa ser iniciado, o sistema
+solicita ao Zygote, por meio de um \emph{Unix domain socket}, a criação de um
+novo processo por \texttt{fork()}~\cite{android_zygote}. O uso de
+\emph{copy-on-write} permite que páginas comuns permaneçam compartilhadas até
+que precisem ser modificadas, reduzindo o custo de inicialização e o consumo de
+memória.
+
+Como o Android é construído sobre o \emph{kernel} Linux, o escalonamento de CPU é
+realizado, em última instância, pelo próprio Linux, ainda que a plataforma
+adicione políticas específicas para preservar a fluidez da experiência móvel. O
+sistema classifica processos conforme sua importância para o usuário e usa essa
+hierarquia tanto para priorizar recursos quanto para decidir quais processos
+podem ser encerrados quando há pressão de memória~\cite{android_process_lifecycle,
+android_memory_mgmt}. A \Cref{tab:android-processos} resume essa hierarquia.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Hierarquia simplificada de prioridade de processos no Android.}
+  \label{tab:android-processos}
+  \begin{tabular}{>{\bfseries}p{4cm} p{8cm}}
+    \toprule
+    Tipo de processo & Nível de prioridade \\
+    \midrule
+    Primeiro plano & Máximo: processo diretamente necessário para a interação atual. \\
+    Processo visível & Muito alto: afeta algo visível ao usuário, ainda que não esteja em foco. \\
+    Serviço & Médio: executa trabalho perceptível ou solicitado por componentes do sistema. \\
+    Segundo plano & Baixo: candidato a encerramento quando há necessidade de memória. \\
+    Processo vazio & Muito baixo: mantido apenas como \emph{cache} e encerrado prioritariamente. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Fuchsia}
+
+No Fuchsia, o gerenciamento de aplicações e o escalonamento de CPU são
+conceitualmente separados. O Zircon gerencia objetos de baixo nível, como
+processos e \emph{threads}, mas não trata aplicações como unidades semânticas
+centrais; essa função pertence ao modelo de componentes e aos \emph{runners}
+~\cite{zircon_kernel_concepts,fuchsia_components}. Assim, o mapeamento entre um
+componente e um processo depende das políticas do componente e do \emph{runner}
+usado para executá-lo.
+
+Entre os \emph{runners} relevantes estão o ELF Runner, usado para binários
+nativos compilados de linguagens como C, C++ ou Rust, o Web Runner, voltado a
+aplicações Web, e o Starnix, que executa programas Linux em espaço de usuário
+~\cite{fuchsia_components,starnix}. Essa organização reforça a separação entre o
+que o \emph{kernel} precisa escalonar, isto é, \emph{threads}, e o que a
+plataforma precisa administrar como software de produto, isto é, componentes com
+capacidades, manifestos e ciclos de vida próprios.
 
 %==============================================================================
 
