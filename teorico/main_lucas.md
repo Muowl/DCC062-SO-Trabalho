@@ -90,3 +90,22 @@ O Fuchsia faz o uso interno de mutexes a partir dos chamados Zircon futexes (Fas
 
 ## Tópico 9: Gerenciamento de Processos e escalonadores
 
+### Android
+
+O root do Android, responsável pela criação de processos, é o Zygote. Quando um processo é requerido, o Zygote é informado pelo sistema por meio de um Unix domain socket. O Zygote então realiza a criação ou fork dos processos. [[39](https://source.android.com/docs/core/runtime/zygote)].
+
+Como o Android é construído sobre um kernel Linux, o escalonamento é, em última análise, atribuição do próprio Linux, ainda que com customizações específicas. O SO possui uma hierarquia de priorização de processos projetada especialmente para encerrar os processos menos críticos para a fluidez do sistema e experiência do usuário quando há pressão de memória. Há ainda mecanismos próprios para reduzir o uso de recursos por aplicações em background e quando o dispositivo está ocioso. Uma visão geral da hierarquia de processos no Android é dada pela tabela.
+
+| Tipo de processo  | Nível de prioridade                    |
+| :---              | :---                                   |
+| Primeiro plano    | Máximo                                 |
+| Processo visível  | Muito alto                             |
+| Serviço           | Médio                                  |
+| Background        | Baixo (candidato a encerramento)       |
+| Processo vazio    | Muito Baixo (encerramento prioritário) |
+
+[[40](https://developer.android.com/guide/components/activities/process-lifecycle)]
+
+### Fuchsia
+
+O escalonamento da CPU e o gerenciamento de processos são estruturalmmente separados na filosofia do Fuchsia. O kernel não gerencia aplicações, apenas threads. O mapeamento de componentes em processos é realizado de acordo com as políticas dos componentes e com o component runner escolhido, como o ELF Runner, que executa binários executáveis compilados a partir de código em C/C++ ou Rust, o Starnix, para programas Linux nativos, e o Web Runner, para aplicativos web.
