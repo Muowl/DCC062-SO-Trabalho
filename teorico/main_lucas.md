@@ -16,7 +16,7 @@ A não responsividade de aplicações é detectada por meio de timeouts de App N
 
 Para comunicações inter-processos, é utilizado o Binder IPC, que abstrai a chamada de métodos em processos remotos em uma interface, sendo usado tanto para comunicação app-sistema e app-app. [[5](https://source.android.com/docs/core/architecture/ipc/binder-overview)]
 
-O Android Zygote é um processo de sistema que é iniciado no boot é serve como template de software para todas as aplicações no sistema operacional. Quando um app necessita de um processo, o zZyfote é o responsável para fazer o fork e a configuração do processo. Esse modelo permite a redução da latência de startup das aplicações. [[6](https://source.android.com/docs/core/runtime/zygote)]
+O Android Zygote é um processo de sistema que é iniciado no boot é serve como template de software para todas as aplicações no sistema operacional. Quando um app necessita de um processo, o Zygote é o responsável para fazer o fork e a configuração do processo. Esse modelo permite a redução da latência de startup das aplicações. [[6](https://source.android.com/docs/core/runtime/zygote)]
 
 #### Eficiência energética
 
@@ -72,6 +72,21 @@ Para compatibilidade com programas desenvolvidos para Linux, o Fuchsia possui um
 
 ## Tópico 8: Exclusão mútua, sincronização e IPC
 
+### Android
 
+A exclusão mútua no Android se dá a partir da criação de um único processo Linux com uma thread principal para cada app inicializado, com os apps podendo criar threads adicionais. Enquanto isso isola os recursos de aplicações separadas, o estado compartilhado dentro de processos individuais necessitam de mecanismos tradicionais de thread safety [[31](https://developer.android.com/guide/components/processes-and-threads)]. Tais garantias geralmente são implementadas nas aplicações individuais por meio de recursos de monitor disponíveis na API de desenvolvimento Android para as linguagens de programação Kotlin -- recomendada pela Google para desenvolvimento de apps no Android -- e Java -- para manutenção de sistemas legados. [[32](https://developer.android.com/reference/java/lang/Object)]
+
+A sincronização na thread principal é executada com o Looper, MessageQueue e Handler. O Looper permite inicializar loops de mensagens para uma thread, a MessageQueue é uma fila de mensagens que são despachadas pelo Looper, e os Handlers são os mecanismos para adicionar mensagens ou Runnabes à fila. Tal mecanismo pssibilita o confinamento da thread principal, um padrão importante para a sincronização. Como o estado da interface do usuário é controlado apenas pela thread principal, locks explícitos geralmente podem ser evitados.
+
+Para processos longos ou bloqueantes, o padrão recomendado é criar worker-threads. A sincronização dessas threads é geralmente implementada por meio de co-rotinas, recursos de programação assíncrona suportadas em Kotlin que permitem agendar a execução de threads de forma não bloqueante. [[33](https://developer.android.com/kotlin/coroutines/coroutines-adv)]
+
+No que diz respeito à comunicação entre processos (IPC), como os processos são isolados e não possuem acesso à memória de outros processos, o Android conta com um mecanismo mecanismo de IPC chamado Binder. O Binder atua como uma arquitetura cliente-servidor, onde um processo invoca operações e outro processo à executa e responde. O Service Manager atua como um diretório que pssibilita a localização pelo cliente de serviços do sistema, com as transações sendo gerenciadas de maneira segura por um driver do Linux. Existe ainda a Android Interface Definition Language (AIDL), que possibilita desenvolver interfaces de alto nível para a serialização das mensagens. [[34](https://source.android.com/docs/core/architecture/hidl/binder-ipc)]
+
+### Fuchsia
+
+A sincronização no Fuchsia é gerenciada por objetos do kernel Zircon. A interação do modo usuário com recursos do kernel se dá por meio de handles, cuja disponibilidade e validade é verificada pelo kernel para cada processo solicitante[[35](https://fuchsia.dev/fuchsia-src/concepts/kernel/concepts)]. Mensagens de IPC são transmitidas de modo bidirecional por meio de Zircon channels, para transferir handles, ou sockets, para transmitir apenas bytes [[36](https://fuchsia.dev/fuchsia-src/reference/kernel_objects/channel), [37](https://fuchsia.dev/fuchsia-src/reference/kernel_objects/socket)].
+
+O Fuchsia faz o uso interno de mutexes a partir dos chamados Zircon futexes (Fast Userspace muTEX), que são o recurso de baixo nível para construir APIs a nível de thread. Os futexes no Zircon são diferentes dos do Linux por serem locais aos processos, ou seja, sao empregados para sincronização de threads dentro de um mesmo processo, não para sincronização entre processos não relacionados. [[38](https://fuchsia.dev/fuchsia-src/reference/kernel_objects/futex)]
 
 ## Tópico 9: Gerenciamento de Processos e escalonadores
+
