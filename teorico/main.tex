@@ -514,8 +514,6 @@ cada sistema satisfaz esses requisitos é tratado no Ponto~5.
 %==============================================================================
 % PONTO 5
 %==============================================================================
-% TODO: Implementar
-
 \section{Atendimento dos requisitos pelos Sistemas Operacionais}
 \label{sec:atendimento}
 
@@ -628,48 +626,156 @@ Fuchsia em um sistema totalmente compatível com Linux; a compatibilidade depend
 do comportamento esperado por cada aplicação~\cite{starnix}.
 
 %==============================================================================
-
 % PONTO 6
-
 %==============================================================================
-
 \section{Sistema de Interrupções do Kernel}
-
 \label{sec:interrupcoes}
 
 \subsection{Mecanismo e divisão de interrupções no Android}
 
-O sistema de interrupções no Android, no nível do \emph{kernel}, opera de forma estruturalmente semelhante ao de um sistema Linux tradicional. No entanto, o Android introduz otimizações agressivas e mecanismos específicos --- como o \emph{driver} Binder e o gerenciamento de memória focado em \emph{proportional set size} e \emph{low memory killer} --- voltados para arquiteturas móveis (ARM/ARM64) e para o controle estrito de energia. O processamento de uma interrupção ocorre em camadas, iniciando-se no estímulo físico e culminando na resposta do sistema operacional.
+O sistema de interrupções no Android, no nível do \emph{kernel}, opera de forma
+estruturalmente semelhante ao de um sistema Linux tradicional. No entanto, o
+Android introduz otimizações agressivas e mecanismos específicos --- como o
+\emph{driver} Binder e o gerenciamento de memória focado em \emph{proportional
+set size} e \emph{low memory killer} --- voltados para arquiteturas móveis
+(ARM/ARM64) e para o controle estrito de energia. O processamento de uma
+interrupção ocorre em camadas, iniciando-se no estímulo físico e culminando na
+resposta do sistema operacional.
 
-Quando um evento físico ocorre, como um toque na tela, o controlador de hardware gera um sinal elétrico denominado requisição de interrupção (IRQ --- \emph{Interrupt Request}). Nos dispositivos Android modernos, esse sinal é interceptado pelo Controlador Genérico de Interrupções (GIC --- \emph{Generic Interrupt Controller}). O GIC atua como um gerenciador central: ele prioriza as interrupções, determina qual núcleo do processador deve tratá-las (afinidade de IRQ) e sinaliza a CPU para alternar seu modo de operação. Nesse momento, a CPU suspende a instrução corrente, salva o contexto atual e desvia o fluxo de execução para um endereço de memória predefinido, conhecido como vetor de interrupção (e seu respectivo IDT). A partir desse ponto, o \emph{kernel} assume o controle por meio do manipulador de interrupções principal (\emph{Interrupt Handler}).
+Quando um evento físico ocorre, como um toque na tela, o controlador de hardware
+gera um sinal elétrico denominado requisição de interrupção (IRQ ---
+\emph{Interrupt Request}). Nos dispositivos Android modernos, esse sinal é
+interceptado pelo Controlador Genérico de Interrupções (GIC --- \emph{Generic
+Interrupt Controller}). O GIC atua como um gerenciador central: ele prioriza as
+interrupções, determina qual núcleo do processador deve tratá-las (afinidade de
+IRQ) e sinaliza a CPU para alternar seu modo de operação. Nesse momento, a CPU
+suspende a instrução corrente, salva o contexto atual e desvia o fluxo de
+execução para um endereço de memória predefinido, conhecido como vetor de
+interrupção (e seu respectivo IDT). A partir desse ponto, o \emph{kernel} assume
+o controle por meio do manipulador de interrupções principal (\emph{Interrupt
+Handler}).
 
-Para evitar o congelamento do sistema, o processamento da interrupção não ocorre de forma integral e síncrona. Se o \emph{kernel} executasse tarefas complexas, como a leitura detalhada de dados de toque e a renderização gráfica, com as interrupções desabilitadas, o sistema apresentaria falhas de responsividade, como engasgos no áudio. Assim, a arquitetura divide o trabalho em duas etapas fundamentais: o \emph{Top Half} e o \emph{Bottom Half}. O \emph{Top Half} (ou \emph{Hard IRQ} / \emph{Fast Handler}) é o código associado diretamente à linha da IRQ e concebido para ser executado com extrema rapidez. Sua função restringe-se a reconhecer a interrupção perante o GIC, limpar o registrador de hardware, salvar os dados brutos em um \emph{buffer} rápido e agendar a execução do estágio seguinte. Durante essa fase, outras interrupções locais permanecem desabilitadas.
+Para evitar o congelamento do sistema, o processamento da interrupção não ocorre
+de forma integral e síncrona. Se o \emph{kernel} executasse tarefas complexas,
+como a leitura detalhada de dados de toque e a renderização gráfica, com as
+interrupções desabilitadas, o sistema apresentaria falhas de responsividade,
+como engasgos no áudio. Assim, a arquitetura divide o trabalho em duas etapas
+fundamentais: o \emph{Top Half} e o \emph{Bottom Half}. O \emph{Top Half} (ou
+\emph{Hard IRQ} / \emph{Fast Handler}) é o código associado diretamente à linha
+da IRQ e concebido para ser executado com extrema rapidez. Sua função
+restringe-se a reconhecer a interrupção perante o GIC, limpar o registrador de
+hardware, salvar os dados brutos em um \emph{buffer} rápido e agendar a execução
+do estágio seguinte. Durante essa fase, outras interrupções locais permanecem
+desabilitadas.
 
-Em seguida, o \emph{Bottom Half} (ou \emph{Slow Handler}) é executado com as interrupções de hardware reabilitadas, permitindo a recepção de novos eventos. No ecossistema Android/Linux, essa etapa utiliza mecanismos distintos. Os \emph{SoftIRQs} são reservados para tarefas críticas de subsistemas que não podem entrar em estado de espera (como temporizadores e redes). Os \emph{Tasklets} são construídos sobre os \emph{SoftIRQs} para facilitar o uso por desenvolvedores de \emph{drivers}. Por fim, as \emph{Workqueues} executam no contexto de \emph{threads} do \emph{kernel} (\texttt{kworker}) e permitem a suspensão da tarefa (estado de \emph{sleep}), sendo o ambiente onde a maior parte do processamento de \emph{drivers} complexos do Android é realizada.
+Em seguida, o \emph{Bottom Half} (ou \emph{Slow Handler}) é executado com as
+interrupções de hardware reabilitadas, permitindo a recepção de novos eventos.
+No ecossistema Android/Linux, essa etapa utiliza mecanismos distintos. Os
+\emph{SoftIRQs} são reservados para tarefas críticas de subsistemas que não
+podem entrar em estado de espera (como temporizadores e redes). Os
+\emph{Tasklets} são construídos sobre os \emph{SoftIRQs} para facilitar o uso
+por desenvolvedores de \emph{drivers}. Por fim, as \emph{Workqueues} executam no
+contexto de \emph{threads} do \emph{kernel} (\texttt{kworker}) e permitem a
+suspensão da tarefa (estado de \emph{sleep}), sendo o ambiente onde a maior
+parte do processamento de \emph{drivers} complexos do Android é realizada.
 
 \subsection{Gerenciamento de energia e propagação no Android}
 
-Uma distinção crítica do Android em relação aos sistemas convencionais reside no tratamento de energia. Quando inativa, a tela é bloqueada e a CPU entra em estados de suspensão profunda (\emph{deep sleep}) para preservar a bateria. Nesse contexto, nem toda interrupção possui permissão para reativar o processador. Interrupções de rotina, como o recebimento de pacotes de rede não essenciais pelo Wi-Fi, não alteram o estado de dormência do sistema.
+Uma distinção crítica do Android em relação aos sistemas convencionais reside no
+tratamento de energia. Quando inativa, a tela é bloqueada e a CPU entra em
+estados de suspensão profunda (\emph{deep sleep}) para preservar a bateria.
+Nesse contexto, nem toda interrupção possui permissão para reativar o
+processador. Interrupções de rotina, como o recebimento de pacotes de rede não
+essenciais pelo Wi-Fi, não alteram o estado de dormência do sistema.
 
-Para eventos que exigem processamento imediato --- como o acionamento do botão de energia, a detecção de um toque duplo pelo acelerômetro ou o recebimento de uma chamada telefônica --- utilizam-se as interrupções de despertar (\emph{Wakeup IRQs}). Estas são configuradas explicitamente nos \emph{drivers} por meio de chamadas como \texttt{enable\_irq\_wake()}. Ao detectá-las, o GIC instrui o circuito de gerenciamento de energia (PMIC) a religar os cores da CPU. Uma vez reativado o \emph{kernel}, o sistema recorre a \emph{Wakelocks} (atualmente integrados ao mecanismo de \emph{autosleep} do Linux). O \emph{kernel} adquire esse bloqueio enquanto processa a interrupção no \emph{Bottom Half}, garantindo que o hardware não retorne prematuramente ao estado de suspensão antes da conclusão da tarefa.
+Para eventos que exigem processamento imediato --- como o acionamento do botão
+de energia, a detecção de um toque duplo pelo acelerômetro ou o recebimento de
+uma chamada telefônica --- utilizam-se as interrupções de despertar
+(\emph{Wakeup IRQs}). Estas são configuradas explicitamente nos \emph{drivers}
+por meio de chamadas como \texttt{enable\_irq\_wake()}. Ao detectá-las, o GIC
+instrui o circuito de gerenciamento de energia (PMIC) a religar os cores da CPU.
+Uma vez reativado o \emph{kernel}, o sistema recorre a \emph{Wakelocks}
+(atualmente integrados ao mecanismo de \emph{autosleep} do Linux). O
+\emph{kernel} adquire esse bloqueio enquanto processa a interrupção no
+\emph{Bottom Half}, garantindo que o hardware não retorne prematuramente ao
+estado de suspensão antes da conclusão da tarefa.
 
-Após o processamento primário pelo \emph{kernel}, o evento precisa ser roteado até o aplicativo no espaço de usuário. Inicialmente, o \emph{driver} de entrada encaminha os dados processados para o subsistema correspondente do \emph{kernel}, disponibilizando-os em interfaces padronizadas, como os arquivos \texttt{/dev/input/eventX} (subsistema \emph{evdev}). No \emph{framework} do Android, uma \emph{thread} nativa escrita em C++, denominada \texttt{InputReader}, monitora continuamente esses arquivos de eventos. Ao registrar novos dados, ela os repassa ao \texttt{InputDispatcher}, que, por sua vez, utiliza a comunicação interprocessos (IPC) via Android Binder ou \emph{Unix Domain Sockets} para entregar a informação ao processo do aplicativo que possui o foco atual na tela. Por fim, o aplicativo intercepta a mensagem em sua \emph{thread} principal (\emph{UI Thread} via \emph{Looper/Handler}), acionando manipuladores de código específicos, como o método \texttt{onTouchEvent()}, e completando o ciclo de interação.
+Após o processamento primário pelo \emph{kernel}, o evento precisa ser roteado
+até o aplicativo no espaço de usuário. Inicialmente, o \emph{driver} de entrada
+encaminha os dados processados para o subsistema correspondente do
+\emph{kernel}, disponibilizando-os em interfaces padronizadas, como os arquivos
+\texttt{/dev/input/eventX} (subsistema \emph{evdev}). No \emph{framework} do
+Android, uma \emph{thread} nativa escrita em C++, denominada
+\texttt{InputReader}, monitora continuamente esses arquivos de eventos. Ao
+registrar novos dados, ela os repassa ao \texttt{InputDispatcher}, que, por sua
+vez, utiliza a comunicação interprocessos (IPC) via Android Binder ou \emph{Unix
+Domain Sockets} para entregar a informação ao processo do aplicativo que possui
+o foco atual na tela. Por fim, o aplicativo intercepta a mensagem em sua
+\emph{thread} principal (\emph{UI Thread} via \emph{Looper/Handler}), acionando
+manipuladores de código específicos, como o método \texttt{onTouchEvent()}, e
+completando o ciclo de interação.
 
 \subsection{Arquitetura e tratamento de interrupções no Fuchsia}
 
-Diferentemente do modelo adotado pelo \emph{kernel} Linux no Android, no qual os \emph{drivers} de dispositivos e o processamento de interrupções compartilham o mesmo espaço de endereçamento do núcleo, o Fuchsia transfere a execução dos \emph{drivers} para o espaço de usuário (\emph{user space}). Essa abordagem arquitetural modifica profundamente o gerenciamento de interrupções no sistema.
+Diferentemente do modelo adotado pelo \emph{kernel} Linux no Android, no qual os
+\emph{drivers} de dispositivos e o processamento de interrupções compartilham o
+mesmo espaço de endereçamento do núcleo, o Fuchsia transfere a execução dos
+\emph{drivers} para o espaço de usuário (\emph{user space}). Essa abordagem
+arquitetural modifica profundamente o gerenciamento de interrupções no sistema.
 
-Enquanto o Android divide o tratamento em duas metades complexas para mitigar a latência do núcleo, o Zircon elimina o conceito de \emph{Bottom Half} de dentro do ambiente do \emph{kernel}. O micronúcleo do Fuchsia executa apenas o mínimo absoluto necessário para interagir com o hardware antes de delegar a continuidade do fluxo. O papel do Zircon restringe-se a interceptar o sinal elétrico de hardware (IRQ), mascarar temporariamente aquela interrupção específica no controlador (como o GIC) para evitar a saturação da CPU, sinalizar a camada superior sobre a ocorrência do evento e devolver imediatamente o processador para a execução das tarefas anteriores.
+Enquanto o Android divide o tratamento em duas metades complexas para mitigar a
+latência do núcleo, o Zircon elimina o conceito de \emph{Bottom Half} de dentro
+do ambiente do \emph{kernel}. O micronúcleo do Fuchsia executa apenas o mínimo
+absoluto necessário para interagir com o hardware antes de delegar a
+continuidade do fluxo. O papel do Zircon restringe-se a interceptar o sinal
+elétrico de hardware (IRQ), mascarar temporariamente aquela interrupção
+específica no controlador (como o GIC) para evitar a saturação da CPU, sinalizar
+a camada superior sobre a ocorrência do evento e devolver imediatamente o
+processador para a execução das tarefas anteriores.
 
-Sendo um sistema operacional orientado a objetos e estruturado sob o princípio de segurança baseada em capacidades, o Fuchsia mapeia as linhas físicas de interrupção de hardware por meio de uma abstração denominada \emph{Interrupt Object}. Para que um \emph{driver} --- que opera como um processo comum em espaço de usuário --- possa interagir com periféricos como placas de rede ou superfícies sensíveis ao toque, é indispensável a posse de um \emph{Handle} (um token de permissão) válido e intransferível associado ao respectivo \emph{Interrupt Object}. A ausência desse descritor impede estritamente a visibilidade ou a manipulação do hardware, assegurando o isolamento completo entre os componentes.
+Sendo um sistema operacional orientado a objetos e estruturado sob o princípio
+de segurança baseada em capacidades, o Fuchsia mapeia as linhas físicas de
+interrupção de hardware por meio de uma abstração denominada \emph{Interrupt
+Object}. Para que um \emph{driver} --- que opera como um processo comum em
+espaço de usuário --- possa interagir com periféricos como placas de rede ou
+superfícies sensíveis ao toque, é indispensável a posse de um \emph{Handle} (um
+token de permissão) válido e intransferível associado ao respectivo
+\emph{Interrupt Object}. A ausência desse descritor impede estritamente a
+visibilidade ou a manipulação do hardware, assegurando o isolamento completo
+entre os componentes.
 
 \subsection{Ciclo de vida e isolamento de falhas no Zircon}
 
-Devido à descentralização dos \emph{drivers} para o espaço de usuário, a gerência do ciclo de vida das interrupções ocorre por meio de chamadas de sistema (\emph{syscalls}). O fluxo operacional inicia-se com o estado de espera, no qual uma \emph{thread} do \emph{driver} em espaço de usuário invoca a \emph{syscall} \texttt{zx\_interrupt\_wait()}. Essa chamada bloqueia a \emph{thread}, colocando-a em estado de dormência até que o evento físico se manifeste.
+Devido à descentralização dos \emph{drivers} para o espaço de usuário, a
+gerência do ciclo de vida das interrupções ocorre por meio de chamadas de
+sistema (\emph{syscalls}). O fluxo operacional inicia-se com o estado de espera,
+no qual uma \emph{thread} do \emph{driver} em espaço de usuário invoca a
+\emph{syscall} \texttt{zx\_interrupt\_wait()}. Essa chamada bloqueia a
+\emph{thread}, colocando-a em estado de dormência até que o evento físico se
+manifeste.
 
-No momento em que o hardware gera a IRQ, o Zircon intercepta o sinal, efetua o mascaramento no nível do controlador e acorda a \emph{thread} correspondente que aguardava naquele \emph{Interrupt Object}. Ao retomar a execução no espaço de usuário, o \emph{driver} assume o controle e realiza o processamento pesado dos dados, efetuando leituras de barramentos, decodificação de pacotes de rede ou interpretação de coordenadas de toque. Concluída a manipulação dos dados, o \emph{driver} invoca a \emph{syscall} \texttt{zx\_interrupt\_ack()}. O Zircon então desmascara a IRQ no hardware, restabelecendo a recepção de novos sinais vindos daquele dispositivo, enquanto o \emph{driver} retorna à chamada de espera, reiniciando o ciclo.
+No momento em que o hardware gera a IRQ, o Zircon intercepta o sinal, efetua o
+mascaramento no nível do controlador e acorda a \emph{thread} correspondente que
+aguardava naquele \emph{Interrupt Object}. Ao retomar a execução no espaço de
+usuário, o \emph{driver} assume o controle e realiza o processamento pesado dos
+dados, efetuando leituras de barramentos, decodificação de pacotes de rede ou
+interpretação de coordenadas de toque. Concluída a manipulação dos dados, o
+\emph{driver} invoca a \emph{syscall} \texttt{zx\_interrupt\_ack()}. O Zircon
+então desmascara a IRQ no hardware, restabelecendo a recepção de novos sinais
+vindos daquele dispositivo, enquanto o \emph{driver} retorna à chamada de
+espera, reiniciando o ciclo.
 
-O benefício central dessa engenharia reside no isolamento de falhas do sistema operacional. No modelo monolítico do Android, uma falha de ponteiro ou uma violação de acesso cometida por um \emph{driver} durante o processamento no \emph{Bottom Half} resulta inevitavelmente em um pânico de núcleo (\emph{Kernel Panic}), o que compromete a integridade de todo o sistema e força a reinicialização do dispositivo. No Fuchsia, caso ocorra uma falha análoga durante o ciclo de processamento da interrupção, o impacto restringe-se exclusivamente ao componente isolado do \emph{driver} em espaço de usuário. O núcleo Zircon permanece preservado e operacional, permitindo que o gerenciador de componentes do Fuchsia reinicie o \emph{driver} afetado de forma transparente e em poucos milissegundos.
+O benefício central dessa engenharia reside no isolamento de falhas do sistema
+operacional. No modelo monolítico do Android, uma falha de ponteiro ou uma
+violação de acesso cometida por um \emph{driver} durante o processamento no
+\emph{Bottom Half} resulta inevitavelmente em um pânico de núcleo (\emph{Kernel
+Panic}), o que compromete a integridade de todo o sistema e força a
+reinicialização do dispositivo. No Fuchsia, caso ocorra uma falha análoga
+durante o ciclo de processamento da interrupção, o impacto restringe-se
+exclusivamente ao componente isolado do \emph{driver} em espaço de usuário. O
+núcleo Zircon permanece preservado e operacional, permitindo que o gerenciador
+de componentes do Fuchsia reinicie o \emph{driver} afetado de forma transparente
+e em poucos milissegundos.
 
 %==============================================================================
 % PONTO 7
@@ -826,36 +932,101 @@ plataforma precisa administrar como software de produto, isto é, componentes co
 capacidades, manifestos e ciclos de vida próprios.
 
 %==============================================================================
-
 % PONTO 10
-
 %==============================================================================
 \section{Gerenciamento de Memória e Memória Virtual}
 \label{sec:memoria}
 
 \subsection{Gerenciamento de memória e paginação no Android}
 
-O gerenciamento de memória no Android baseia-se diretamente no subsistema de gerenciamento de memória do \emph{kernel} Linux, extensamente adaptado para lidar com as severas restrições de hardware, ciclos de bateria e ausência de armazenamento secundário persistente convencional em dispositivos móveis. O sistema utiliza uma arquitetura de memória virtual puramente baseada em paginação sob demanda, mapeando o espaço de endereçamento lógico dos processos para as páginas físicas da memória RAM por meio da Unidade de Gerenciamento de Memória (MMU). No Android, cada aplicativo executa dentro de seu próprio espaço de endereçamento virtual isolado de 64 bits (em plataformas ARM64 modernas), mitigando interferências mútuas e implementando técnicas avançadas de segurança, como a Randomização do Layout do Espaço de Endereçamento (ASLR).
+O gerenciamento de memória no Android baseia-se diretamente no subsistema de
+gerenciamento de memória do \emph{kernel} Linux, extensamente adaptado para
+lidar com as severas restrições de hardware, ciclos de bateria e ausência de
+armazenamento secundário persistente convencional em dispositivos móveis. O
+sistema utiliza uma arquitetura de memória virtual puramente baseada em
+paginação sob demanda, mapeando o espaço de endereçamento lógico dos processos
+para as páginas físicas da memória RAM por meio da Unidade de Gerenciamento de
+Memória (MMU). No Android, cada aplicativo executa dentro de seu próprio espaço
+de endereçamento virtual isolado de 64 bits (em plataformas ARM64 modernas),
+mitigando interferências mútuas e implementando técnicas avançadas de segurança,
+como a Randomização do Layout do Espaço de Endereçamento (ASLR).
 
-Para otimizar o uso da RAM física e estender a vida útil do armazenamento Flash (eMMC ou UFS), o Android abdica do uso de partições de \emph{swap} tradicionais em disco, as quais gerariam desgaste prematuro do hardware por ciclos excessivos de escrita. Em contrapartida, o sistema adota amplamente o mecanismo ZRAM, que consiste em um bloco de memória comprimido alocado na própria RAM dinâmica. Quando o subsistema de paginação do \emph{kernel} identifica páginas de memória subutilizadas ou pertencentes a processos em segundo plano, essas páginas são compactadas e movidas para a ZRAM de forma síncrona, sendo descompactadas imediatamente quando referenciadas pelo processador, expandindo artificialmente a capacidade utilizável do sistema.
+Para otimizar o uso da RAM física e estender a vida útil do armazenamento Flash
+(eMMC ou UFS), o Android abdica do uso de partições de \emph{swap} tradicionais
+em disco, as quais gerariam desgaste prematuro do hardware por ciclos excessivos
+de escrita. Em contrapartida, o sistema adota amplamente o mecanismo ZRAM, que
+consiste em um bloco de memória comprimido alocado na própria RAM dinâmica.
+Quando o subsistema de paginação do \emph{kernel} identifica páginas de memória
+subutilizadas ou pertencentes a processos em segundo plano, essas páginas são
+compactadas e movidas para a ZRAM de forma síncrona, sendo descompactadas
+imediatamente quando referenciadas pelo processador, expandindo artificialmente
+a capacidade utilizável do sistema.
 
 \subsection{Mecanismos de controle e otimização de RAM no Android}
 
-Devido à natureza altamente interativa dos dispositivos móveis, o Android avalia o consumo real de memória por meio de uma métrica estrita denominada \emph{Proportional Set Size} (PSS). O cálculo do PSS mensura a quantidade de memória RAM física associada a um processo, dividindo proporcionalmente o peso de páginas de bibliotecas e recursos compartilhados entre todos os processos ativos que os utilizam, o que provê uma visão fidedigna do custo real de cada aplicação para o sistema operacional.
+Devido à natureza altamente interativa dos dispositivos móveis, o Android avalia
+o consumo real de memória por meio de uma métrica estrita denominada
+\emph{Proportional Set Size} (PSS). O cálculo do PSS mensura a quantidade de
+memória RAM física associada a um processo, dividindo proporcionalmente o peso
+de páginas de bibliotecas e recursos compartilhados entre todos os processos
+ativos que os utilizam, o que provê uma visão fidedigna do custo real de cada
+aplicação para o sistema operacional.
 
-Quando os limiares de memória livre atingem níveis críticos que ameaçam a estabilidade da interface gráfica ou das tarefas prioritárias, o Android aciona o \emph{Low Memory Killer Daemon} (\texttt{lmkd}) operando no espaço de usuário. O \texttt{lmkd} monitora continuamente as flutuações de RAM e, amparado por pontuações dinâmicas de ajuste de falta de memória (\emph{OOM Adjustment scores}), encerra seletivamente os processos menos prioritários. Esse encerramento segue uma hierarquia rígida, liquidando primeiro os aplicativos obsoletos em segundo plano e preservando de forma persistente o processo em foco na tela (\emph{foreground app}), os serviços do sistema e o \emph{framework} gráfico, assegurando baixa latência de transição e alta responsividade visual.
+Quando os limiares de memória livre atingem níveis críticos que ameaçam a
+estabilidade da interface gráfica ou das tarefas prioritárias, o Android aciona
+o \emph{Low Memory Killer Daemon} (\texttt{lmkd}) operando no espaço de usuário.
+O \texttt{lmkd} monitora continuamente as flutuações de RAM e, amparado por
+pontuações dinâmicas de ajuste de falta de memória (\emph{OOM Adjustment
+scores}), encerra seletivamente os processos menos prioritários. Esse
+encerramento segue uma hierarquia rígida, liquidando primeiro os aplicativos
+obsoletos em segundo plano e preservando de forma persistente o processo em foco
+na tela (\emph{foreground app}), os serviços do sistema e o \emph{framework}
+gráfico, assegurando baixa latência de transição e alta responsividade visual.
 
 \subsection{Abstração de memória no Fuchsia: VMOs e VMARs}
 
-No Fuchsia o paradigma de gerenciamento de memória virtual afasta-se por completo dos conceitos clássicos de alocação herdados da tradição Unix/Linux, adotando uma arquitetura puramente orientada a objetos e livre do acoplamento tradicional. O Zircon descentraliza o controle da memória virtual estruturando-o em torno de duas abstrações conceituais fundamentais e complementares: os Objetos de Memória Virtual (VMOs --- \emph{Virtual Memory Objects}) e as Regiões de Endereçamento de Memória Virtual (VMARs --- \emph{Virtual Memory Address Regions}).
+No Fuchsia o paradigma de gerenciamento de memória virtual afasta-se por
+completo dos conceitos clássicos de alocação herdados da tradição Unix/Linux,
+adotando uma arquitetura puramente orientada a objetos e livre do acoplamento
+tradicional. O Zircon descentraliza o controle da memória virtual estruturando-o
+em torno de duas abstrações conceituais fundamentais e complementares: os
+Objetos de Memória Virtual (VMOs --- \emph{Virtual Memory Objects}) e as Regiões
+de Endereçamento de Memória Virtual (VMARs --- \emph{Virtual Memory Address
+Regions}).
 
-Um VMO representa um contêiner lógico de dados puros que encapsula um conjunto de páginas físicas alocadas ou mapeadas sob demanda. Ele funciona como a representação primordial de memória utilizável no sistema, permitindo operações de leitura, escrita e clonagem via primitivas de comunicação orientadas a objetos. Por outro lado, uma VMAR abstrai o layout e a geometria do próprio espaço de endereçamento virtual atribuído a um processo. As VMARs organizam-se na forma de uma árvore hierárquica, onde a raiz define todo o espaço virtual disponível para o processo e os nós filhos especificam subdivisões protegidas com permissões de execução, leitura e escrita estipuladas rigorosamente em tempo de projeto.
+Um VMO representa um contêiner lógico de dados puros que encapsula um conjunto
+de páginas físicas alocadas ou mapeadas sob demanda. Ele funciona como a
+representação primordial de memória utilizável no sistema, permitindo operações
+de leitura, escrita e clonagem via primitivas de comunicação orientadas a
+objetos. Por outro lado, uma VMAR abstrai o layout e a geometria do próprio
+espaço de endereçamento virtual atribuído a um processo. As VMARs organizam-se
+na forma de uma árvore hierárquica, onde a raiz define todo o espaço virtual
+disponível para o processo e os nós filhos especificam subdivisões protegidas
+com permissões de execução, leitura e escrita estipuladas rigorosamente em tempo
+de projeto.
 
 \subsection{Segurança por capacidades e isolamento de memória no Zircon}
 
-O mapeamento efetivo e o acesso à memória física no Fuchsia estão rigidamente atrelados ao modelo de segurança baseado em capacidades do micronúcleo. Um processo é incapaz de acessar um VMO diretamente; ele deve possuir um \emph{Handle} válido --- uma credencial restrita e intransferível emitida pelo \emph{kernel} --- que contenha as permissões adequadas para mapear o referido VMO dentro de uma sub-região de sua árvore VMAR correspondente. Esta operação traduz o endereço lógico em tabelas de páginas gerenciadas pelo Zircon, consolidando o controle de acesso direto por hardware.
+O mapeamento efetivo e o acesso à memória física no Fuchsia estão rigidamente
+atrelados ao modelo de segurança baseado em capacidades do micronúcleo. Um
+processo é incapaz de acessar um VMO diretamente; ele deve possuir um
+\emph{Handle} válido --- uma credencial restrita e intransferível emitida pelo
+\emph{kernel} --- que contenha as permissões adequadas para mapear o referido
+VMO dentro de uma sub-região de sua árvore VMAR correspondente. Esta operação
+traduz o endereço lógico em tabelas de páginas gerenciadas pelo Zircon,
+consolidando o controle de acesso direto por hardware.
 
-Visto que os \emph{drivers} de dispositivos no Fuchsia operam inteiramente fora do núcleo, no espaço de usuário, cada subsistema de hardware é alocado em um processo isolado dotado de sua própria árvore hierárquica de VMARs. Diferente do Android, onde uma corrupção de memória ou falha de ponteiro em um \emph{driver} no espaço de \emph{kernel} invalida toda a memória global do sistema, a arquitetura do Fuchsia restringe os impactos a um contexto estritamente local. Caso um componente de hardware sofra um vazamento de memória ou tente acessar um endereço virtual inválido, a violação é contida pela VMAR do processo do \emph{driver}, permitindo que o \emph{kernel} elimine o componente instável e recupere as páginas físicas dos VMOs associados sem afetar a execução dos demais serviços ou do núcleo do sistema.
+Visto que os \emph{drivers} de dispositivos no Fuchsia operam inteiramente fora
+do núcleo, no espaço de usuário, cada subsistema de hardware é alocado em um
+processo isolado dotado de sua própria árvore hierárquica de VMARs. Diferente do
+Android, onde uma corrupção de memória ou falha de ponteiro em um \emph{driver}
+no espaço de \emph{kernel} invalida toda a memória global do sistema, a
+arquitetura do Fuchsia restringe os impactos a um contexto estritamente local.
+Caso um componente de hardware sofra um vazamento de memória ou tente acessar um
+endereço virtual inválido, a violação é contida pela VMAR do processo do
+\emph{driver}, permitindo que o \emph{kernel} elimine o componente instável e
+recupere as páginas físicas dos VMOs associados sem afetar a execução dos demais
+serviços ou do núcleo do sistema.
 
 %==============================================================================
 % PONTO 11
@@ -914,37 +1085,85 @@ de usuário, aumentando o isolamento, a segurança e a modularidade do sistema
 operacional.
 
 %==============================================================================
-
 % PONTO 12
-
 %==============================================================================
-
 \section{Características Arquiteturais Distintivas}
 \label{sec:caracteristicas_distintivas}
 
 \subsection{Cadeia de inicialização e o modelo Zygote no Android}
 
-Uma característica arquitetural singular do Android que o diferencia de sistemas Linux convencionais é a sua cadeia de inicialização (\emph{boot process}) voltada para a otimização do tempo de abertura de aplicativos. Após o carregamento do \emph{kernel} e a execução do processo \texttt{init} primitivo, o Android inicializa um daemon especial denominado \emph{Zygote}. O Zygote é um processo mantido perpetuamente ``aquecido'' na memória que já contém a máquina virtual Android Runtime (ART), as bibliotecas centrais do \emph{framework} e os recursos gráficos pré-carregados.
+Uma característica arquitetural singular do Android que o diferencia de sistemas
+Linux convencionais é a sua cadeia de inicialização (\emph{boot process})
+voltada para a otimização do tempo de abertura de aplicativos. Após o
+carregamento do \emph{kernel} e a execução do processo \texttt{init} primitivo,
+o Android inicializa um daemon especial denominado \emph{Zygote}. O Zygote é um
+processo mantido perpetuamente ``aquecido'' na memória que já contém a máquina
+virtual Android Runtime (ART), as bibliotecas centrais do \emph{framework} e os
+recursos gráficos pré-carregados.
 
-Quando o usuário ou o sistema solicita a abertura de um novo aplicativo, em vez de construir um processo do zero, o sistema operacional realiza um \texttt{fork()} a partir do processo Zygote. Essa abordagem elimina o tempo de inicialização da máquina virtual para cada nova aplicação e permite que todos os aplicativos compartilhem fisicamente as mesmas páginas de memória das bibliotecas base (através do mecanismo \emph{Copy-on-Write}), resultando em uma inicialização quase instantânea e em uma drástica economia de memória global, requisito vital para dispositivos móveis.
+Quando o usuário ou o sistema solicita a abertura de um novo aplicativo, em vez
+de construir um processo do zero, o sistema operacional realiza um
+\texttt{fork()} a partir do processo Zygote. Essa abordagem elimina o tempo de
+inicialização da máquina virtual para cada nova aplicação e permite que todos os
+aplicativos compartilhem fisicamente as mesmas páginas de memória das
+bibliotecas base (através do mecanismo \emph{Copy-on-Write}), resultando em uma
+inicialização quase instantânea e em uma drástica economia de memória global,
+requisito vital para dispositivos móveis.
 
 \subsection{Topologia de inicialização baseada em componentes no Fuchsia}
 
-O Fuchsia rejeita o modelo de inicialização linear baseado em \emph{scripts} (como o \texttt{init.rc} do Android) e a clonagem de processos monolíticos como o Zygote. A inicialização no Fuchsia, após o carregamento da Imagem de Boot do Zircon (ZBI) e do processo inicial \texttt{userboot}, é inteiramente delegada ao Gerenciador de Componentes (\emph{Component Manager}). A partir desse ponto, o sistema operacional cresce e se estrutura como uma árvore topológica estrita.
+O Fuchsia rejeita o modelo de inicialização linear baseado em \emph{scripts}
+(como o \texttt{init.rc} do Android) e a clonagem de processos monolíticos como
+o Zygote. A inicialização no Fuchsia, após o carregamento da Imagem de Boot do
+Zircon (ZBI) e do processo inicial \texttt{userboot}, é inteiramente delegada ao
+Gerenciador de Componentes (\emph{Component Manager}). A partir desse ponto, o
+sistema operacional cresce e se estrutura como uma árvore topológica estrita.
 
-No Fuchsia, não existe a pré-carga de uma máquina virtual central ou global. Como o sistema suporta nativamente múltiplas linguagens (C++, Rust, Dart, Go), cada aplicativo ou serviço do sistema traz o seu próprio ambiente de execução através de um \emph{Runner} específico (por exemplo, um \emph{ELF Runner} para binários nativos ou um \emph{Web Runner} para aplicações web). Os componentes são instanciados do zero, de forma totalmente isolada em seus respectivos contêineres herméticos, priorizando o encapsulamento e a segurança estrutural em detrimento do compartilhamento de estado global.
+No Fuchsia, não existe a pré-carga de uma máquina virtual central ou global.
+Como o sistema suporta nativamente múltiplas linguagens (C++, Rust, Dart, Go),
+cada aplicativo ou serviço do sistema traz o seu próprio ambiente de execução
+através de um \emph{Runner} específico (por exemplo, um \emph{ELF Runner} para
+binários nativos ou um \emph{Web Runner} para aplicações web). Os componentes
+são instanciados do zero, de forma totalmente isolada em seus respectivos
+contêineres herméticos, priorizando o encapsulamento e a segurança estrutural em
+detrimento do compartilhamento de estado global.
 
 \subsection{Modularidade e a arquitetura Treble/APEX no Android}
 
-O ciclo de vida do software do sistema representa outro contraste fundamental. Historicamente prejudicado pela fragmentação de versões, o Android reestruturou sua arquitetura de forma agressiva com os projetos \emph{Treble} e \emph{Mainline}. O \emph{Treble} isolou o código do sistema operacional base do código específico de hardware provido pelas fabricantes através de Camadas de Abstração de Hardware (HAL) rigidamente versionadas, permitindo atualizações do SO sem a necessidade de recompilar \emph{drivers}.
+O ciclo de vida do software do sistema representa outro contraste fundamental.
+Historicamente prejudicado pela fragmentação de versões, o Android reestruturou
+sua arquitetura de forma agressiva com os projetos \emph{Treble} e
+\emph{Mainline}. O \emph{Treble} isolou o código do sistema operacional base do
+código específico de hardware provido pelas fabricantes através de Camadas de
+Abstração de Hardware (HAL) rigidamente versionadas, permitindo atualizações do
+SO sem a necessidade de recompilar \emph{drivers}.
 
-Posteriormente, a introdução do formato de pacote APEX (\emph{Android Pony EXpress}) permitiu que componentes nativos de baixo nível do sistema (como \emph{codecs} de mídia e resolvedores DNS) fossem atualizados de forma dinâmica e granular. O APEX funciona montando pacotes como sistemas de arquivos em \emph{loopback}, possibilitando que a Google envie atualizações críticas do \emph{kernel} e do sistema diretamente pela loja de aplicativos, desobrigando atualizações completas de \emph{firmware} (OTA) e dependência direta das operadoras de telefonia.
+Posteriormente, a introdução do formato de pacote APEX (\emph{Android Pony
+EXpress}) permitiu que componentes nativos de baixo nível do sistema (como
+\emph{codecs} de mídia e resolvedores DNS) fossem atualizados de forma dinâmica
+e granular. O APEX funciona montando pacotes como sistemas de arquivos em
+\emph{loopback}, possibilitando que a Google envie atualizações críticas do
+\emph{kernel} e do sistema diretamente pela loja de aplicativos, desobrigando
+atualizações completas de \emph{firmware} (OTA) e dependência direta das
+operadoras de telefonia.
 
 \subsection{O paradigma de software efêmero no Fuchsia}
 
-O Fuchsia, amparado por sua natureza micronúcleo, leva o conceito de modularidade ao extremo ao abolir a própria ideia de uma "imagem estática" de sistema operacional no espaço de usuário. O Fuchsia adota uma arquitetura radical de ``software efêmero''. Nesse modelo, a interface gráfica, os serviços do sistema operacional e os aplicativos de usuário final não são ``instalados'' no sentido computacional tradicional.
+O Fuchsia, amparado por sua natureza micronúcleo, leva o conceito de
+modularidade ao extremo ao abolir a própria ideia de uma "imagem estática" de
+sistema operacional no espaço de usuário. O Fuchsia adota uma arquitetura
+radical de ``software efêmero''. Nesse modelo, a interface gráfica, os serviços
+do sistema operacional e os aplicativos de usuário final não são ``instalados''
+no sentido computacional tradicional.
 
-Todo o software executável é tratado como um pacote criptograficamente assinado, identificado e resolvido através de URLs. O sistema baixa, armazena em cache e executa os pacotes estritamente sob demanda. Isso garante que as dependências possam ser atualizadas de forma autônoma e assíncrona, e que o sistema operacional seja inerentemente \emph{evergreen} (sempre em sua versão mais recente). Esse paradigma elimina a necessidade de partições A/B complexas ou reinicializações do dispositivo inteiro apenas para aplicar atualizações a serviços e componentes de interface.
+Todo o software executável é tratado como um pacote criptograficamente assinado,
+identificado e resolvido através de URLs. O sistema baixa, armazena em cache e
+executa os pacotes estritamente sob demanda. Isso garante que as dependências
+possam ser atualizadas de forma autônoma e assíncrona, e que o sistema
+operacional seja inerentemente \emph{evergreen} (sempre em sua versão mais
+recente). Esse paradigma elimina a necessidade de partições A/B complexas ou
+reinicializações do dispositivo inteiro apenas para aplicar atualizações a
+serviços e componentes de interface.
 
 %==============================================================================
 % REFERÊNCIAS
