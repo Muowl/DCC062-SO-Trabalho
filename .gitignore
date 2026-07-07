@@ -19,8 +19,9 @@
 *.xdv
 *-converted-to.*
 
-## PDF gerado (descomente se NÃO quiser versionar o PDF final)
-*.pdf
+## PDF final: versionado no repositório (slides e documento do trabalho).
+## Para voltar a ignorar PDFs gerados, descomente a linha abaixo:
+# *.pdf
 
 ## Bibliografia
 *.bbl

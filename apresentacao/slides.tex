@@ -1,0 +1,448 @@
+%==============================================================================
+% DCC062 - Sistemas Operacionais - Apresentacao (Parte Teorica)
+% Tema 1: Android e Fuchsia - Grupo 8
+%
+% Slides enxutos (pouco texto) para a apresentacao oral.
+% 1 a 2 slides por ponto do roteiro (12 pontos).
+%
+% Compilar:  cd apresentacao && latexmk -pdf slides.tex
+%   ou:      pdflatex slides.tex   (rodar 2x para o sumario/rodape)
+%==============================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+%------------------------------------------------------------------ Idioma
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern}
+
+%------------------------------------------------------------------ Visual simples
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}   % sem os botoes de navegacao
+\useinnertheme{circles}                     % marcadores discretos
+
+% Paleta (mesmo azul do trabalho escrito)
+\definecolor{azulUFJF}{HTML}{1A5276}
+\definecolor{cinzaClaro}{HTML}{F2F4F4}
+\definecolor{androidVerde}{HTML}{2E7D32}
+\definecolor{fuchsiaCor}{HTML}{8E24AA}
+
+\setbeamercolor{frametitle}{fg=white,bg=azulUFJF}
+\setbeamercolor{title}{fg=azulUFJF}
+\setbeamercolor{structure}{fg=azulUFJF}
+\setbeamercolor{section in toc}{fg=azulUFJF}
+\setbeamerfont{frametitle}{series=\bfseries}
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.6ex,dp=1.1ex,leftskip=0.4cm]{frametitle}
+    \insertframetitle
+  \end{beamercolorbox}%
+}
+
+% Rodape minimalista: tema | secao atual | numero do slide
+\setbeamertemplate{footline}{%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.4ex,dp=1ex,leftskip=.3cm]{author in head/foot}%
+      \tiny Android e Fuchsia --- Grupo 8%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.4ex,dp=1ex,rightskip=.3cm]{author in head/foot}%
+      \hfill\tiny \insertsectionhead\quad\insertframenumber/\inserttotalframenumber%
+    \end{beamercolorbox}%
+  }%
+}
+
+%------------------------------------------------------- Atalhos para comparacao
+% Rotulos coloridos de Android / Fuchsia usados nas colunas
+\newcommand{\ANDROID}{\textbf{\color{androidVerde}Android}}
+\newcommand{\FUCHSIA}{\textbf{\color{fuchsiaCor}Fuchsia}}
+
+% Bloco de duas colunas Android | Fuchsia.
+% Uso: \comparar{itens android}{itens fuchsia}
+\newcommand{\comparar}[2]{%
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \ANDROID\par\smallskip
+      \begin{itemize}\footnotesize #1 \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \FUCHSIA\par\smallskip
+      \begin{itemize}\footnotesize #2 \end{itemize}
+    \end{column}
+  \end{columns}%
+}
+
+%------------------------------------------------------------------ Metadados
+\title{Android e Fuchsia}
+\subtitle{Dois sistemas da Google, duas filosofias}
+\author{Grupo 8 \\ \small Felipe Lazzarini Cunha \and Lucas Vieira Resende \and Nathan Zoffoli}
+\institute{\small UFJF --- DCC062 Sistemas Operacionais --- 2026.1}
+\date{Julho de 2026}
+
+\begin{document}
+
+%==============================================================================
+% CAPA
+%==============================================================================
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+  \titlepage
+  \begin{center}
+    \footnotesize\color{gray}
+    \ANDROID: kernel Linux monolítico \quad$\bullet$\quad
+    \FUCHSIA: microkernel Zircon
+  \end{center}
+\end{frame}}
+
+%------------------------------------------------------------------ Roteiro
+\begin{frame}{Roteiro}
+  \footnotesize
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \begin{enumerate}[1.]
+        \item Apresentação do tema
+        \item Propósito, evolução e virtualização
+        \item Tipos de aplicação e uso do kernel
+        \item Requisitos das aplicações
+        \item Como os requisitos são atendidos
+        \item Sistema de interrupções
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{enumerate}[1.]\setcounter{enumi}{6}
+        \item Suporte a threads
+        \item Exclusão mútua, sincronização e IPC
+        \item Processos e escalonadores
+        \item Memória e memória virtual
+        \item I/O e sistemas de arquivos
+        \item Características distintivas
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%==============================================================================
+% PONTO 1 - APRESENTACAO
+%==============================================================================
+\section{1. Apresentação}
+
+\begin{frame}{1. Apresentação do tema}
+  Dois sistemas operacionais da \textbf{Google} com filosofias opostas.
+  \vfill
+  \comparar{
+    \item SO móvel mais usado do mundo
+    \item \emph{Kernel} Linux modificado (ACK)
+    \item Aberto via AOSP
+    \item Estreia em 2008 (HTC Dream)
+  }{
+    \item Construído ``do zero''
+    \item Microkernel próprio: \textbf{Zircon}
+    \item Segurança por \emph{capacidades}
+    \item Público em 2016; Nest Hub em 2021
+  }
+  \vfill
+  \begin{center}\small
+    Monolítico e maduro \quad$\times$\quad micronúcleo e modular.
+  \end{center}
+\end{frame}
+
+%==============================================================================
+% PONTO 2 - PROPOSITO, EVOLUCAO, VIRTUALIZACAO
+%==============================================================================
+\section{2. Propósito}
+
+\begin{frame}{2. Propósito de cada sistema}
+  \comparar{
+    \item Plataforma completa para dispositivos móveis
+    \item \emph{Framework} + \emph{runtime} + serviços
+    \item Roda sobre \emph{kernel} Linux adaptado
+    \item Foco: ecossistema amplo de apps
+  }{
+    \item SO de propósito geral, experimental
+    \item Modular, atualizável e seguro na base
+    \item Tudo é \emph{componente} com capacidades
+    \item Foco: isolamento e composição
+  }
+\end{frame}
+
+\begin{frame}{2. Evolução e virtualização}
+  \comparar{
+    \item Dalvik $\rightarrow$ \textbf{ART} (\emph{bytecode} DEX)
+    \item Modularização: Treble e Mainline
+    \item \textbf{AVF/pKVM}: VMs protegidas (Microdroid)
+    \item Isola memória mesmo se o host cair
+  }{
+    \item Magenta $\rightarrow$ \textbf{Zircon} (2017)
+    \item Componentes, pacotes e FIDL
+    \item \textbf{Starnix}: compatibilidade com Linux
+    \item Isolamento por capacidades, não VM
+  }
+\end{frame}
+
+%==============================================================================
+% PONTO 3 - TIPOS DE APLICACAO / USO DO KERNEL   [PREENCHIDO]
+%==============================================================================
+\section{3. Tipos de aplicação}
+
+\begin{frame}{3. Tipos de aplicação e uso do kernel}
+  \comparar{
+    \item Apps \emph{interativos} de terceiros
+    \item Kernel Linux usado em:
+    \item \quad \emph{smartphones} e \emph{tablets}
+    \item \quad Android TV, Wear OS
+    \item \quad Android Automotive (carros)
+    \item Mesmo kernel, muitas classes de aparelho
+  }{
+    \item Dispositivos conectados / IoT
+    \item Zircon usado em:
+    \item \quad \emph{smart displays} (Nest Hub)
+    \item \quad produtos embarcados da Google
+    \item Presença comercial mais restrita
+    \item Um só núcleo, foco em segurança
+  }
+  \vfill
+  {\scriptsize\color{gray} Android: apps móveis interativos em muitas formas de dispositivo; Fuchsia: dispositivos conectados, com o Zircon como microkernel comum.}
+\end{frame}
+
+%==============================================================================
+% PONTO 4 - REQUISITOS
+%==============================================================================
+\section{4. Requisitos}
+
+\begin{frame}{4. Requisitos das aplicações}
+  \comparar{
+    \item Baixo \textbf{tempo de resposta} (16,7 ms/quadro)
+    \item \textbf{Eficiência energética} (bateria)
+    \item Operar sob \textbf{pouca memória}
+    \item Isolamento por aplicativo
+    \item Portabilidade entre hardwares
+  }{
+    \item \textbf{Segurança} por capacidades
+    \item \textbf{Atualizabilidade} sob demanda
+    \item Modularidade e composição
+    \item Escalabilidade entre dispositivos
+    \item Compatibilidade com Linux
+  }
+  \vfill
+  \begin{center}\small
+    Android prioriza o \emph{usuário final}; Fuchsia, a \emph{estrutura} do sistema.
+  \end{center}
+\end{frame}
+
+%==============================================================================
+% PONTO 5 - ATENDIMENTO DOS REQUISITOS
+%==============================================================================
+\section{5. Atendimento}
+
+\begin{frame}{5. Como o Android atende os requisitos}
+  \ANDROID
+  \begin{itemize}\footnotesize
+    \item \textbf{Responsividade:} Looper/Handler, InputReader/Dispatcher, Choreographer + VSync; alerta \emph{ANR}
+    \item \textbf{Energia:} Doze, SystemSuspend, \emph{wakelocks}, mitigação térmica
+    \item \textbf{Memória:} \texttt{kswapd} + \texttt{lmkd} encerram processos menos importantes
+    \item \textbf{Segurança:} \emph{sandbox} por UID, SELinux, \emph{Verified Boot}, Binder
+    \item \textbf{Portabilidade:} HALs e GKI separam plataforma de \emph{drivers}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{5. Como o Fuchsia atende os requisitos}
+  \FUCHSIA
+  \begin{itemize}\footnotesize
+    \item \textbf{Segurança:} processos sem autoridade; recursos via \emph{handles} (menor privilégio)
+    \item \textbf{Atualizabilidade:} software em pacotes independentes, sob demanda
+    \item \textbf{Modularidade:} componentes com \emph{manifesto} e capacidades declaradas
+    \item \textbf{Escalabilidade:} \emph{build} configurado por produto
+    \item \textbf{Compatibilidade:} Starnix implementa a interface de \emph{syscalls} do Linux
+  \end{itemize}
+\end{frame}
+
+%==============================================================================
+% PONTO 6 - INTERRUPCOES
+%==============================================================================
+\section{6. Interrupções}
+
+\begin{frame}{6. Sistema de interrupções}
+  \comparar{
+    \item IRQ $\rightarrow$ \textbf{GIC} $\rightarrow$ CPU
+    \item Dividido em duas metades:
+    \item \quad \emph{Top Half}: rápido, reconhece a IRQ
+    \item \quad \emph{Bottom Half}: SoftIRQ, Tasklet, Workqueue
+    \item \emph{Wakeup IRQs} + \emph{wakelocks} p/ acordar
+  }{
+    \item \emph{Drivers} no espaço de usuário
+    \item Zircon só mascara e sinaliza o evento
+    \item \emph{Interrupt Object} + \emph{Handle}
+    \item Ciclo: \texttt{zx\_interrupt\_wait / ack}
+    \item Falha no \emph{driver} não derruba o núcleo
+  }
+  \vfill
+  \begin{center}\small
+    Linux: falha de \emph{driver} $=$ \emph{kernel panic}. \quad Zircon: só reinicia o componente.
+  \end{center}
+\end{frame}
+
+%==============================================================================
+% PONTO 7 - THREADS   [PREENCHIDO]
+%==============================================================================
+\section{7. Threads}
+
+\begin{frame}{7. Suporte a threads}
+  \comparar{
+    \item \emph{Threads} são do \emph{kernel} Linux (modelo \textbf{1:1})
+    \item Base em \texttt{pthreads}; \texttt{Thread} de Java/Kotlin
+    \item \emph{UI thread} + \emph{worker threads}
+    \item \texttt{HandlerThread} e co-rotinas (Kotlin)
+    \item Escalonamento fica a cargo do Linux
+  }{
+    \item \emph{Thread} é um \textbf{objeto do Zircon}
+    \item Um processo contém uma ou mais \emph{threads}
+    \item Escalonadas diretamente pelo micronúcleo
+    \item \texttt{pthreads}/C11 sobre \texttt{zx\_thread}
+    \item \emph{Futexes} para sincronização interna
+  }
+  \vfill
+  {\scriptsize\color{gray} Ambos usam \emph{threads} de núcleo (1:1); o Android as herda do Linux, o Fuchsia as expõe como objetos do Zircon.}
+\end{frame}
+
+%==============================================================================
+% PONTO 8 - EXCLUSAO MUTUA, SINCRONIZACAO, IPC
+%==============================================================================
+\section{8. Sincronização e IPC}
+
+\begin{frame}{8. Exclusão mútua, sincronização e IPC}
+  \comparar{
+    \item Isolamento: 1 processo/UID por app
+    \item Monitores Java: \texttt{wait/notify}
+    \item \emph{UI thread}: Looper + MessageQueue + Handler
+    \item \textbf{Binder} IPC + Service Manager + AIDL
+  }{
+    \item Recursos via \emph{handles} do Zircon
+    \item \emph{Channels}: mensagens \emph{e} \emph{handles}
+    \item \emph{Sockets}: fluxo de \emph{bytes}
+    \item \emph{Futexes} locais ao processo
+  }
+  \vfill
+  \begin{center}\small
+    Android: IPC centralizado no Binder. \quad Fuchsia: canais + capacidades.
+  \end{center}
+\end{frame}
+
+%==============================================================================
+% PONTO 9 - PROCESSOS E ESCALONADORES
+%==============================================================================
+\section{9. Processos}
+
+\begin{frame}{9. Processos e escalonadores}
+  \comparar{
+    \item Processos criados pelo \textbf{Zygote}
+    \item \texttt{fork()} + \emph{copy-on-write}
+    \item Escalonamento é do \emph{kernel} Linux
+    \item Prioridade: primeiro plano $\rightarrow$ vazio
+  }{
+    \item Kernel escalona \emph{threads}, não apps
+    \item Apps $=$ \emph{componentes} via \emph{runners}
+    \item ELF Runner, Web Runner, Starnix
+    \item Ciclo de vida no \emph{Component Manager}
+  }
+  \vfill
+  \begin{center}\footnotesize
+    \ANDROID: Zygote ``aquecido'' acelera a abertura de apps compartilhando páginas.
+  \end{center}
+\end{frame}
+
+%==============================================================================
+% PONTO 10 - MEMORIA
+%==============================================================================
+\section{10. Memória}
+
+\begin{frame}{10. Memória e memória virtual}
+  \comparar{
+    \item Paginação sob demanda + ASLR
+    \item \textbf{Sem swap em disco} $\rightarrow$ \textbf{ZRAM} (comprimida)
+    \item Métrica \textbf{PSS} mede custo real de RAM
+    \item \texttt{lmkd} + \emph{OOM score} liberam memória
+  }{
+    \item \textbf{VMO}: contêiner de páginas físicas
+    \item \textbf{VMAR}: árvore do espaço de endereços
+    \item Acesso só com \emph{handle} válido
+    \item Falha de \emph{driver} contida na sua VMAR
+  }
+\end{frame}
+
+%==============================================================================
+% PONTO 11 - I/O E SISTEMAS DE ARQUIVOS   [PREENCHIDO]
+%==============================================================================
+\section{11. I/O e arquivos}
+
+\begin{frame}{11. I/O e sistemas de arquivos}
+  \comparar{
+    \item I/O pela \textbf{VFS} do Linux
+    \item \textbf{F2FS} e ext4 (flash interno)
+    \item EROFS (partição de sistema, só leitura)
+    \item FAT/exFAT (cartões SD) via FUSE
+    \item \emph{Scoped storage} isola arquivos por app
+  }{
+    \item Sistemas de arquivos em \emph{espaço de usuário}
+    \item Acesso via \emph{canais} / FIDL
+    \item \textbf{Fxfs}: sistema de arquivos padrão atual
+    \item \textbf{Blobfs}: pacotes por \emph{hash} de conteúdo
+    \item FVM gerencia os volumes
+  }
+  \vfill
+  {\scriptsize\color{gray} Android reaproveita a VFS do Linux (F2FS/ext4/EROFS); no Fuchsia cada FS é um componente isolado (Fxfs, Blobfs).}
+\end{frame}
+
+%==============================================================================
+% PONTO 12 - CARACTERISTICAS DISTINTIVAS
+%==============================================================================
+\section{12. Distintivos}
+
+\begin{frame}{12. Características distintivas}
+  \comparar{
+    \item \textbf{Zygote}: processo ``aquecido'' com ART
+    \item \emph{fork} + \emph{copy-on-write} $\rightarrow$ boot rápido de apps
+    \item \textbf{Treble} isola SO do código do fabricante
+    \item \textbf{APEX/Mainline}: atualiza módulos pela loja
+  }{
+    \item Boot cresce como \textbf{árvore de componentes}
+    \item Cada app traz seu próprio \emph{runner}
+    \item \textbf{Software efêmero}: pacotes por URL
+    \item Sistema \emph{evergreen}, sem reinstalar
+  }
+\end{frame}
+
+%==============================================================================
+% ENCERRAMENTO
+%==============================================================================
+\section{}
+
+\begin{frame}{Síntese}
+  \begin{center}
+    \large Uma mesma empresa, dois caminhos.
+  \end{center}
+  \vfill
+  \comparar{
+    \item Monolítico (Linux), maduro e onipresente
+    \item Otimiza a \emph{experiência do usuário}
+    \item Evolui adaptando um núcleo consolidado
+  }{
+    \item Micronúcleo (Zircon), moderno e modular
+    \item Otimiza \emph{segurança} e \emph{atualização}
+    \item Repensa o SO a partir do zero
+  }
+  \vfill
+  \begin{center}\small\color{azulUFJF}
+    Desempenho e simplicidade \quad$\times$\quad isolamento e atualizabilidade.
+  \end{center}
+\end{frame}
+
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+  \centering
+  \vfill
+  {\Huge\color{azulUFJF}\bfseries Obrigado!}\\[2em]
+  \footnotesize Grupo 8 --- DCC062 Sistemas Operacionais --- UFJF --- 2026.1
+  \vfill
+\end{frame}}
+
+\end{document}

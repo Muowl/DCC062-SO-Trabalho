@@ -11,6 +11,7 @@ Temas sorteados:
 
 - Felipe Lazzarini Cunha
 - Lucas Vieira Resende
+- Nathan Zoffoli
 
 ## Divisão do Trabalho Teórico (Tema 1)
 
