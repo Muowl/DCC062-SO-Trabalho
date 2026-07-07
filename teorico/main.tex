@@ -328,6 +328,58 @@ capacidades e componentes, usando Starnix como camada de compatibilidade Linux, 
 não como hipervisor equivalente.
 
 %==============================================================================
+% PONTO 3
+%==============================================================================
+
+\section{Tipos de aplicações atendidas pelo sistema operacional}
+\label{sec:tipos_aplicacoes}
+
+\subsection{Android}
+
+O Android foi desenvolvido principalmente para executar aplicações
+\textbf{interativas}, sendo utilizado em smartphones, tablets, televisores,
+relógios inteligentes, sistemas automotivos e diversos dispositivos embarcados.
+Seu foco está na interação direta com o usuário por meio de interfaces gráficas,
+com requisitos elevados de responsividade e suporte à execução simultânea de
+múltiplas aplicações.
+
+Além das aplicações interativas, o Android oferece suporte à execução de
+serviços em segundo plano responsáveis por sincronização de dados, notificações,
+processamento periódico, reprodução de mídia e comunicação em rede. Entretanto,
+o sistema não é classificado como um sistema operacional de tempo real (RTOS),
+embora seja capaz de executar aplicações que exijam baixa latência, como áudio
+e vídeo, graças às otimizações presentes no kernel Linux e na plataforma
+Android \cite{aosp,aospkernel}.
+
+O Android utiliza uma versão modificada do kernel Linux, cuja arquitetura é
+classificada como \emph{monolítica modular}. Nesse modelo, serviços essenciais
+como gerenciamento de memória, processos, dispositivos de entrada e saída,
+drivers e sistemas de arquivos executam em espaço de kernel, enquanto módulos
+permitem ampliar o suporte a diferentes dispositivos de hardware sem alterar o
+núcleo principal do sistema \cite{aospkernel}.
+
+\subsection{Fuchsia}
+
+O Fuchsia foi projetado para atender uma ampla variedade de dispositivos,
+incluindo equipamentos embarcados, dispositivos inteligentes, computadores e
+outros sistemas conectados. Assim como o Android, seu principal foco está em
+aplicações interativas, porém sua arquitetura prioriza modularidade,
+escalabilidade, isolamento e segurança.
+
+O sistema também pode ser empregado em aplicações que demandam baixa latência e
+alta confiabilidade, embora não seja considerado um sistema operacional de
+tempo real tradicional. Sua arquitetura foi desenvolvida para fornecer maior
+previsibilidade e isolamento entre componentes quando comparada aos sistemas
+baseados em kernels monolíticos \cite{fuchsiadev}.
+
+O Fuchsia utiliza o kernel Zircon, desenvolvido especificamente para esse
+sistema operacional. O Zircon apresenta uma arquitetura
+\emph{microkernel-like}, mantendo no núcleo apenas os mecanismos essenciais de
+gerenciamento de processos, threads, memória virtual, comunicação entre
+processos e escalonamento, enquanto diversos serviços, como drivers e sistemas
+de arquivos, executam em espaço de usuário \cite{zircon}.
+
+%==============================================================================
 % PONTO 4
 %==============================================================================
 \setcounter{section}{3}
@@ -620,6 +672,41 @@ No momento em que o hardware gera a IRQ, o Zircon intercepta o sinal, efetua o m
 O benefício central dessa engenharia reside no isolamento de falhas do sistema operacional. No modelo monolítico do Android, uma falha de ponteiro ou uma violação de acesso cometida por um \emph{driver} durante o processamento no \emph{Bottom Half} resulta inevitavelmente em um pânico de núcleo (\emph{Kernel Panic}), o que compromete a integridade de todo o sistema e força a reinicialização do dispositivo. No Fuchsia, caso ocorra uma falha análoga durante o ciclo de processamento da interrupção, o impacto restringe-se exclusivamente ao componente isolado do \emph{driver} em espaço de usuário. O núcleo Zircon permanece preservado e operacional, permitindo que o gerenciador de componentes do Fuchsia reinicie o \emph{driver} afetado de forma transparente e em poucos milissegundos.
 
 %==============================================================================
+% PONTO 7
+%==============================================================================
+
+\section{Suporte a threads}
+\label{sec:threads}
+
+\subsection{Android}
+
+O Android possui suporte nativo à execução concorrente por meio de
+\textbf{threads de nível de kernel} (Kernel-Level Threads), implementadas pelo
+próprio kernel Linux. Cada aplicação é executada como um processo Linux
+independente e inicia sua execução com uma thread principal, responsável pelo
+processamento da interface gráfica da aplicação.
+
+Sempre que necessário, novas threads podem ser criadas utilizando as APIs da
+plataforma, como a classe \texttt{Thread}, mecanismos baseados em
+\texttt{Executor} ou corrotinas da linguagem Kotlin. Independentemente da API
+utilizada, o escalonamento das threads é realizado pelo kernel Linux, que
+compartilha entre elas os recursos pertencentes ao mesmo processo, como memória
+e descritores de arquivos \cite{android_process_threads}.
+
+\subsection{Fuchsia}
+
+No Fuchsia, o suporte à concorrência também é implementado por meio de threads
+de nível de kernel. Entretanto, diferentemente do Linux, cada thread é tratada
+como um objeto do próprio kernel Zircon.
+
+As threads podem ser criadas, iniciadas, suspensas e encerradas utilizando as
+chamadas de sistema disponibilizadas pelo Zircon. O escalonador do kernel é
+responsável por controlar prioridades, sincronização e distribuição das threads
+entre os núcleos do processador, oferecendo boa responsividade para aplicações
+interativas e elevado isolamento entre componentes do sistema
+\cite{zircon_thread}.
+
+%==============================================================================
 % PONTO 8
 %==============================================================================
 \section{Exclusão mútua, sincronização e IPC}
@@ -769,6 +856,62 @@ Um VMO representa um contêiner lógico de dados puros que encapsula um conjunto
 O mapeamento efetivo e o acesso à memória física no Fuchsia estão rigidamente atrelados ao modelo de segurança baseado em capacidades do micronúcleo. Um processo é incapaz de acessar um VMO diretamente; ele deve possuir um \emph{Handle} válido --- uma credencial restrita e intransferível emitida pelo \emph{kernel} --- que contenha as permissões adequadas para mapear o referido VMO dentro de uma sub-região de sua árvore VMAR correspondente. Esta operação traduz o endereço lógico em tabelas de páginas gerenciadas pelo Zircon, consolidando o controle de acesso direto por hardware.
 
 Visto que os \emph{drivers} de dispositivos no Fuchsia operam inteiramente fora do núcleo, no espaço de usuário, cada subsistema de hardware é alocado em um processo isolado dotado de sua própria árvore hierárquica de VMARs. Diferente do Android, onde uma corrupção de memória ou falha de ponteiro em um \emph{driver} no espaço de \emph{kernel} invalida toda a memória global do sistema, a arquitetura do Fuchsia restringe os impactos a um contexto estritamente local. Caso um componente de hardware sofra um vazamento de memória ou tente acessar um endereço virtual inválido, a violação é contida pela VMAR do processo do \emph{driver}, permitindo que o \emph{kernel} elimine o componente instável e recupere as páginas físicas dos VMOs associados sem afetar a execução dos demais serviços ou do núcleo do sistema.
+
+%==============================================================================
+% PONTO 11
+%==============================================================================
+
+\section{Sistema de entrada e saída e sistemas de arquivos}
+\label{sec:io}
+
+\subsection{Android}
+
+O sistema de entrada e saída do Android deriva diretamente do modelo utilizado
+pelo Linux. As aplicações acessam arquivos e dispositivos utilizando
+descritores de arquivos (\emph{file descriptors}), enquanto chamadas de sistema
+encaminham as operações para os respectivos drivers presentes no kernel. Acima
+dessa camada, o Android disponibiliza diversos frameworks responsáveis pelo
+acesso a dispositivos como sensores, câmera, áudio, Bluetooth, rede e demais
+periféricos utilizados pelas aplicações \cite{aosp}.
+
+O Android oferece suporte a diversos sistemas de arquivos. O principal deles é
+o \texttt{ext4}, amplamente utilizado nas partições internas do sistema. Também
+há suporte ao \texttt{F2FS}, otimizado para memórias Flash, além de
+\texttt{exFAT}, \texttt{FAT/VFAT}, \texttt{EROFS}, \texttt{FUSE},
+\texttt{IncFS} e sistemas virtuais como \texttt{procfs}, \texttt{sysfs} e
+\texttt{tmpfs}, utilizados pelo próprio kernel Linux
+\cite{android_filesystems}.
+
+\subsection{Fuchsia}
+
+O sistema de entrada e saída do Fuchsia utiliza um modelo baseado em objetos,
+\emph{handles} e comunicação entre processos (IPC). Em vez de acessar
+diretamente dispositivos por meio de descritores de arquivos, as aplicações
+utilizam a biblioteca \texttt{fdio}, que fornece uma interface semelhante ao
+POSIX. As operações são convertidas em mensagens transmitidas por
+\emph{channels} do Zircon até os serviços responsáveis pelo acesso aos
+dispositivos, que executam em espaço de usuário. Essa arquitetura proporciona
+maior isolamento entre componentes e reduz o impacto de falhas em drivers
+\cite{zircon,fuchsia_io}.
+
+O Fuchsia suporta diferentes sistemas de arquivos desenvolvidos para finalidades
+específicas. Entre eles destacam-se o \texttt{Fxfs}, considerado o sistema de
+arquivos moderno da plataforma; o \texttt{BlobFS}, utilizado para armazenar
+pacotes do sistema; o \texttt{MinFS}, empregado em componentes persistentes;
+além de suporte ao \texttt{FAT}, \texttt{F2FS}, \texttt{MemFS} e
+\texttt{FactoryFS}, utilizados conforme as necessidades de cada dispositivo
+\cite{fuchsia_fs}.
+
+\subsection{Comparação}
+
+Embora ambos os sistemas ofereçam suporte a múltiplos sistemas de arquivos e
+mecanismos modernos de entrada e saída, suas arquiteturas diferem
+significativamente. O Android herda o modelo tradicional do Linux, baseado em
+descritores de arquivos e drivers executando no espaço de kernel. Já o Fuchsia
+adota uma abordagem baseada em objetos e comunicação por mensagens, na qual os
+drivers e serviços de sistema de arquivos executam predominantemente em espaço
+de usuário, aumentando o isolamento, a segurança e a modularidade do sistema
+operacional.
 
 %==============================================================================
 
