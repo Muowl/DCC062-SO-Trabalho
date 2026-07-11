@@ -19,47 +19,53 @@ Current mode:                   enforcing
 cd <caminho-até-o-diretório>/selinux_demo
 ```
 
-3. Criar arquivos de teste
+3. Criar o arquivo de teste original
+
 ```bash
-echo "Este arquivo tem acesso bloqueado!" > blocked.txt
-echo "Este arquivo tem acesso permitido!" > allowed.txt
+nano teste.sh
 ```
 
-4. Configurar as políticas (etiquetas) do selinux
+4. No arquivo, inserir o script:
 
 ```bash
-sudo chcon -t shadow_t blocked.txt
-sudo chcon -t user_home_t allowed.txt
+#!/bin/bash
+cat /etc/shadow
+echo "Se você leu a linha acima, o acesso foi permitido."
 ```
 
-5. Checar se as etiquetas foram aplicadas
+5. Dar permissão de execução para o script
 
 ```bash
-ls -Z blocked.txt allowed.txt
+chmod +x teste.sh
 ```
 
-6. Realizar os testes
+6. Realizar o teste inicial (Acesso Permitido)
 
-- Leitura
-
-blocked.txt
 ```bash
-cat blocked.txt
+./teste.sh
+```
+Espera-se que o script consiga rodar e mostre na tela a frase de acesso permitido (ou exiba o erro do cat, mas finalize o script).
+
+7. Configurar a política (etiqueta) do selinux para bloquear a execução
+
+```bash
+sudo chcon -t var_log_t teste.sh
 ```
 
-allowed.txt
+8. Checar se a etiqueta foi aplicada
+
 ```bash
-cat allowed.txt
+ls -Z teste.sh
 ```
+Espera-se que a resposta contenha a etiqueta `var_log_t` no meio da linha.
 
-- Escrita
+9. Realizar o teste final (Acesso Bloqueado)
 
-blocked.txt
 ```bash
-echo "teste" >> blocked.txt
+./teste.sh
 ```
+Espera-se que a resposta contenha a seguinte mensagem de erro, impedindo o script de rodar completamente:
 
-allowed.txt
-```bash
-echo "teste" >> allowed.txt
+```txt
+bash: ./teste.sh: Permissão negada
 ```
