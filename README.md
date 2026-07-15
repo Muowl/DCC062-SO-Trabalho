@@ -24,13 +24,13 @@ O roteiro teórico possui **12 pontos**, divididos entre os 4 integrantes (3 pon
 | 3 | Tipos de aplicação atendidos; em quais tipos de SO o kernel é utilizado | — |
 | 4 | Requisitos do tipo de aplicação que o SO/kernel atende | Felipe Lazzarini Cunha |
 | 5 | Como o SO/kernel atende esses requisitos | Lucas Vieira Resende |
-| 6 | Sistema de interrupção do SO/kernel | — |
+| 6 | Sistema de interrupção do SO/kernel | Nathan Zoffoli |
 | 7 | Suporte a threads (tipos e implementação) | — |
 | 8 | Exclusão mútua, sincronização e IPC | Lucas Vieira Resende |
 | 9 | Gerenciamento de Processos e escalonadores | Lucas Vieira Resende |
-| 10 | Gerenciamento de Memória e Memória Virtual | — |
+| 10 | Gerenciamento de Memória e Memória Virtual | Nathan Zoffoli |
 | 11 | Sistema de I/O e sistemas de arquivos suportados | — |
-| 12 | Características adicionais que destacam o sistema | — |
+| 12 | Características adicionais que destacam o sistema | Nathan Zoffoli |
 
 > Os pontos marcados com "—" serão atribuídos aos demais integrantes (3 pontos cada).
 
